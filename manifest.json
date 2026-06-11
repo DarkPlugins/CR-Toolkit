@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "CR-Toolkit",
+  "version": "1.2",
+  "description": "Enhances the Crunchyroll web interface with additional controls and convenience features, making anime watching more fun :)",
+  "author": "DarkPlugins",
+  "icons": {
+    "48": "icon.png",
+    "128": "icon.png"
+  },
+  "permissions": ["storage", "scripting"],
+  "host_permissions": ["*://www.crunchyroll.com/*"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icon.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://www.crunchyroll.com/*"],
+      "js": ["content.js"]
+    }
+  ]
+}
