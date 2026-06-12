@@ -14,7 +14,20 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
+}
+
+.feat-item {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
 }
 
 /* Checkbox verstecken */
@@ -71,9 +84,18 @@ input[type="checkbox"]:checked + .toggle-label::after {
 </head>
 
 <body>
-<span class="toggle-text">Player Resize</span>
-<input type="checkbox" id="toggle">
-<label for="toggle" class="toggle-label"></label>
+    <div class="content">
+        <div class="feat-item">
+            <span class="toggle-text">Player Resize</span>
+            <input type="checkbox" id="toggle-player-resize">
+            <label for="toggle-player-resize" class="toggle-label"></label>
+        </div>
+        <div class="feat-item">
+            <span class="toggle-text">Auto Skip - Opening</span>
+            <input type="checkbox" id="toggle-auto-skip-opening">
+            <label for="toggle-auto-skip-opening" class="toggle-label"></label>
+        </div>
+    </div>
 
 <script src="popup.js"></script>
 </body>
