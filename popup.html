@@ -3,26 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <style>
-/* Dark Mode Hintergrund */
 body {
     font-family: sans-serif;
-    padding: 20px;
+    padding: 16px;
     background-color: #282828;
     color: #FF640A;
-    min-width: 180px;
-    min-height: 25px;
+    min-width: 240px;
+}
+.content {
     display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.feat-item {
+    display: flex;
+    gap: 8px;
     align-items: center;
-    justify-content: center;
-    gap: 12px;
+    justify-content: space-between;
 }
-
-/* Checkbox verstecken */
 input[type="checkbox"] {
-    display: none;
+    position: absolute;
+    left: -9999px;
 }
-
-/* Toggle-Stil */
 .toggle-label {
     position: relative;
     display: inline-block;
@@ -30,7 +32,6 @@ input[type="checkbox"] {
     height: 28px;
     cursor: pointer;
 }
-
 .toggle-label::before {
     content: "";
     position: absolute;
@@ -40,7 +41,6 @@ input[type="checkbox"] {
     border-radius: 20px;
     transition: background 0.3s;
 }
-
 .toggle-label::after {
     content: "";
     position: absolute;
@@ -52,29 +52,48 @@ input[type="checkbox"] {
     border-radius: 50%;
     transition: transform 0.3s;
 }
-
-input[type="checkbox"]:checked + .toggle-label::before {
-    background: #4caf50;
+input[type="checkbox"]:checked + .toggle-label::before { background: #4caf50; }
+input[type="checkbox"]:checked + .toggle-label::after { transform: translateX(22px); }
+input[type="color"] {
+    width: 44px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    background: none;
 }
-
-input[type="checkbox"]:checked + .toggle-label::after {
-    transform: translateX(22px);
-}
-
-/* Text */
-.toggle-text {
-    font-size: 16px;
-    user-select: none;
-    font-weight: bold;
+#reset-colors {
+    padding: 6px 10px;
+    background: #444;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
 }
 </style>
+<script src="popup.js" defer></script>
 </head>
-
 <body>
-<span class="toggle-text">Player Resize</span>
-<input type="checkbox" id="toggle">
-<label for="toggle" class="toggle-label"></label>
+  <div class="content">
+    <h1 style="margin:0 0 6px 0;font-size:16px;">CR-Toolkit</h1>
 
-<script src="popup.js"></script>
+    <div class="feat-item">
+      <span style="font-weight:bold;font-size:13px;">Player Resize</span>
+      <div>
+        <input type="checkbox" id="toggle">
+        <label for="toggle" class="toggle-label" aria-hidden="true"></label>
+      </div>
+    </div>
+
+    <h2 style="margin:8px 0 4px 0;font-size:14px;">Colors</h2>
+
+    <div class="feat-item">
+      <label for="input-accent">Accent</label>
+      <input type="color" id="input-accent" title="Accent color">
+    </div>
+
+    <div style="display:flex;justify-content:center;margin-top:6px;">
+      <button id="reset-colors">Reset</button>
+    </div>
+  </div>
 </body>
 </html>

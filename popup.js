@@ -1,13 +1,31 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const checkbox = document.getElementById("toggle");
+  const checkbox = document.getElementById("toggle");
+  const accent = document.getElementById("input-accent");
+  const resetBtn = document.getElementById("reset-colors");
 
-    // Load current status
-    chrome.storage.sync.get(["enabled"], (data) => {
-        checkbox.checked = data.enabled ?? true;
-    });
+  const DEFAULTS = {
+    enabled: true,
+    accentColor: "#FF640A"
+  };
 
-    // Save changes
-    checkbox.addEventListener("change", () => {
-        chrome.storage.sync.set({ enabled: checkbox.checked });
+  chrome.storage.sync.get(["enabled", "accentColor"], (data) => {
+    checkbox.checked = data.enabled ?? DEFAULTS.enabled;
+    accent.value = data.accentColor ?? DEFAULTS.accentColor;
+  });
+
+  checkbox.addEventListener("change", () => {
+    chrome.storage.sync.set({ enabled: checkbox.checked });
+  });
+
+  // Save accent immediately on input (no debounce) so content script can apply without delay
+  accent.addEventListener("input", () => {
+    chrome.storage.sync.set({ accentColor: accent.value });
+  });
+
+  resetBtn.addEventListener("click", () => {
+    chrome.storage.sync.set(DEFAULTS, () => {
+      accent.value = DEFAULTS.accentColor;
+      checkbox.checked = DEFAULTS.enabled;
     });
+  });
 });
