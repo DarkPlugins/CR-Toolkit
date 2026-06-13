@@ -3,17 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <style>
-/* Dark Mode Hintergrund */
+:root {
+    --primary-accent: #FF640A;
+    --secondary-accent: #b7183e;
+}
+
+
 body {
     font-family: sans-serif;
-    padding: 20px;
+    padding: 10px;
     background-color: #282828;
-    color: #FF640A;
-    min-width: 180px;
-    min-height: 25px;
+    color: var(--primary-accent);
+    width: 250px;
+    height: 500px;
     display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .content {
@@ -23,11 +26,46 @@ body {
     gap: 10px;
 }
 
+.content h1 {
+    text-align: center;
+    font-size: 35px;
+}
+
+.content span {
+    text-align: left;
+    font-size: 20px;
+}
+
+#footer {
+    text-align: center;
+    font-size: 15px;
+}
+
+.content a {
+    color: var(--primary-accent);
+    text-decoration: none;
+}
+
+.content a:hover {
+    color: var(--secondary-accent);
+}
+
+.section {
+    width: 100%;
+    border: 1px solid var(--primary-accent);
+    height: 380px;
+    overflow: auto;
+    margin: 0 auto;
+}
+
 .feat-item {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    width: 100%;
+    padding: 10px;
+    width: auto;
+    align-items: center;
+    margin-bottom: 1rem;
 }
 
 /* Checkbox verstecken */
@@ -85,16 +123,20 @@ input[type="checkbox"]:checked + .toggle-label::after {
 
 <body>
     <div class="content">
-        <div class="feat-item">
-            <span class="toggle-text">Player Resize</span>
-            <input type="checkbox" id="toggle-player-resize">
-            <label for="toggle-player-resize" class="toggle-label"></label>
+        <h1>CR Toolkit</h1>
+        <div class="section" id="s-general">
+            <div class="feat-item">
+                <span class="toggle-text">Player Resize</span>
+                <input type="checkbox" id="toggle-player-resize">
+                <label for="toggle-player-resize" class="toggle-label"></label>
+            </div>
+            <div class="feat-item">
+                <span class="toggle-text">Auto Skip OP/ED</span>
+                <input type="checkbox" id="toggle-auto-skip">
+                <label for="toggle-auto-skip" class="toggle-label"></label>
+            </div>
         </div>
-        <div class="feat-item">
-            <span class="toggle-text">Auto Skip OP/ED</span>
-            <input type="checkbox" id="toggle-auto-skip">
-            <label for="toggle-auto-skip" class="toggle-label"></label>
-        </div>
+        <span id="footer">Made with ❤️ by <a href="https://darkplugins.de" target="_blank">DarkPlugins</a></span>
     </div>
 
 <script src="popup.js"></script>
