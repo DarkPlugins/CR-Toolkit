@@ -20,7 +20,11 @@
   "content_scripts": [
     {
       "matches": ["*://www.crunchyroll.com/*"],
-      "js": ["content.js"]
+      "js": [
+        "src/js/features/playerResize.js",
+        "src/js/features/autoSkip.js",
+        "src/js/content.js"
+      ]
     }
   ]
 }

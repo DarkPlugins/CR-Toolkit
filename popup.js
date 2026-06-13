@@ -1,20 +1,29 @@
 document.addEventListener("DOMContentLoaded", () => {
     const checkboxPlayerResize = document.getElementById("toggle-player-resize");
-    const checkboxAutoSkipOpening = document.getElementById("toggle-auto-skip-opening");
+    const checkboxAutoSkip = document.getElementById("toggle-auto-skip");
 
     // Load current status
-    chrome.storage.sync.get(["enabled_player_resize"], (data) => {
-        checkboxPlayerResize.checked = data.enabled ?? true;
-    });
-    chrome.storage.sync.get(["enabled_auto_skip_opening"], (data) => {
-        checkboxAutoSkipOpening.checked = data.enabled ?? true;
-    });
+    chrome.storage.sync.get(
+        [
+            "enabled_player_resize",
+            "enabled_auto_skip"
+        ],
+        (data) => {
+            checkboxPlayerResize.checked =
+                data.enabled_player_resize ?? true;
 
+            checkboxAutoSkip.checked =
+                data.enabled_auto_skip ?? true;
+        }
+    );
+
+    
     // Save changes
     checkboxPlayerResize.addEventListener("change", () => {
-        chrome.storage.sync.set({ enabled: checkboxPlayerResize.checked });
+        chrome.storage.sync.set({ enabled_player_resize: checkboxPlayerResize.checked });
     });
-    checkboxAutoSkipOpening.addEventListener("change", () => {
-        chrome.storage.sync.set({ enabled: checkboxAutoSkipOpening.checked });
+
+    checkboxAutoSkip.addEventListener("change", () => {
+        chrome.storage.sync.set({ enabled_auto_skip: checkboxAutoSkip.checked });
     });
 });
