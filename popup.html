@@ -8,15 +8,14 @@
     --secondary-accent: #b7183e;
 }
 
-
 body {
-    font-family: sans-serif;
+    display: flex;
+    width: 400px;
+    height: 500px;
     padding: 10px;
+    font-family: sans-serif;
     background-color: #282828;
     color: var(--primary-accent);
-    width: 250px;
-    height: 500px;
-    display: flex;
 }
 
 .content {
@@ -29,6 +28,7 @@ body {
 .content h1 {
     text-align: center;
     font-size: 35px;
+    margin-bottom: 0;
 }
 
 .content span {
@@ -50,12 +50,44 @@ body {
     color: var(--secondary-accent);
 }
 
-.section {
+.navbar {
+    display: flex;
+    gap: 1rem;
+}
+
+.nav-btn {
+    flex: 1;
+    padding: 8px;
+    background: transparent;
+    border: 1px solid var(--primary-accent);
+    border-radius: 10px;
+    color: var(--primary-accent);
+    cursor: pointer;
+}
+
+.nav-btn.active {
+    background: var(--primary-accent);
+    color: #282828;
+    font-weight: bold;
+}
+
+.section-container {
     width: 100%;
     border: 1px solid var(--primary-accent);
+    border-radius: 10px;
     height: 380px;
+    overflow: hidden;
+}
+
+.section-page {
+    display: none;
+    width: 100%;
+    height: 100%;
     overflow: auto;
-    margin: 0 auto;
+}
+
+.section-page.active {
+    display: block;
 }
 
 .feat-item {
@@ -65,15 +97,12 @@ body {
     padding: 10px;
     width: auto;
     align-items: center;
-    margin-bottom: 1rem;
 }
 
-/* Checkbox verstecken */
 input[type="checkbox"] {
     display: none;
 }
 
-/* Toggle-Stil */
 .toggle-label {
     position: relative;
     display: inline-block;
@@ -112,7 +141,6 @@ input[type="checkbox"]:checked + .toggle-label::after {
     transform: translateX(22px);
 }
 
-/* Text */
 .toggle-text {
     font-size: 16px;
     user-select: none;
@@ -124,19 +152,49 @@ input[type="checkbox"]:checked + .toggle-label::after {
 <body>
     <div class="content">
         <h1>CR Toolkit</h1>
-        <div class="section" id="s-general">
-            <div class="feat-item">
-                <span class="toggle-text">Player Resize</span>
-                <input type="checkbox" id="toggle-player-resize">
-                <label for="toggle-player-resize" class="toggle-label"></label>
+
+        <div class="navbar">
+            <button class="nav-btn" data-section="s-general">
+                General
+            </button>
+
+            <button class="nav-btn" data-section="s-appearance">
+                Appearance
+            </button>
+
+            <button class="nav-btn" data-section="s-options">
+                Options
+            </button>
+        </div>
+
+        <div class="section-container">
+            <div class="section-page" id="s-general">
+                <div class="feat-item">
+                    <span class="toggle-text">Player Resize</span>
+                    <input type="checkbox" id="toggle-player-resize">
+                    <label for="toggle-player-resize" class="toggle-label"></label>
+                </div>
+
+                <div class="feat-item">
+                    <span class="toggle-text">Auto Skip OP/ED</span>
+                    <input type="checkbox" id="toggle-auto-skip">
+                    <label for="toggle-auto-skip" class="toggle-label"></label>
+                </div>
             </div>
-            <div class="feat-item">
-                <span class="toggle-text">Auto Skip OP/ED</span>
-                <input type="checkbox" id="toggle-auto-skip">
-                <label for="toggle-auto-skip" class="toggle-label"></label>
+
+            <div class="section-page" id="s-appearance">
+
+            </div>
+
+            <div class="section-page" id="s-options">
+
             </div>
         </div>
-        <span id="footer">Made with ❤️ by <a href="https://darkplugins.de" target="_blank">DarkPlugins</a></span>
+
+        <span id="footer">
+            Made with ❤️ by
+            <a href="https://darkplugins.de" target="_blank">DarkPlugins</a>
+        </span>
     </div>
 
 <script src="popup.js"></script>

@@ -1,6 +1,7 @@
 chrome.runtime.onInstalled.addListener(() => {
     chrome.storage.sync.get(
         [
+            "active_popup_section",
             "enabled_player_resize",
             "enabled_auto_skip"
         ],
@@ -13,6 +14,10 @@ chrome.runtime.onInstalled.addListener(() => {
 
             if (data.enabled_auto_skip === undefined) {
                 updates.enabled_auto_skip = true;
+            }
+
+            if (data.active_popup_section === undefined) {
+                updates.active_popup_section = "s-general";
             }
 
             if (Object.keys(updates).length > 0) {
