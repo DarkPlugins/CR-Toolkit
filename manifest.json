@@ -23,6 +23,7 @@
       "js": [
         "src/js/features/playerResize.js",
         "src/js/features/autoSkip.js",
+        "src/js/features/hideHeader.js",
         "src/js/content.js"
       ]
     }

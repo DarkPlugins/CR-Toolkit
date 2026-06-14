@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
     const checkboxPlayerResize = document.getElementById("toggle-player-resize");
     const checkboxAutoSkip = document.getElementById("toggle-auto-skip");
+    const checkboxHideHeader = document.getElementById("toggle-hide-header");
 
     const navButtons = document.querySelectorAll(".nav-btn");
     const sections = document.querySelectorAll(".section-page");
@@ -27,7 +28,8 @@ document.addEventListener("DOMContentLoaded", () => {
         [
             "enabled_player_resize",
             "enabled_auto_skip",
-            "active_popup_section"
+            "active_popup_section",
+            "enabled_hide_header"
         ],
         (data) => {
             checkboxPlayerResize.checked =
@@ -35,6 +37,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
             checkboxAutoSkip.checked =
                 data.enabled_auto_skip ?? true;
+
+            checkboxHideHeader.checked =
+                data.enabled_hide_header ?? true;
 
             showSection(
                 data.active_popup_section ?? "s-general"
@@ -59,6 +64,12 @@ document.addEventListener("DOMContentLoaded", () => {
     checkboxAutoSkip.addEventListener("change", () => {
         chrome.storage.sync.set({
             enabled_auto_skip: checkboxAutoSkip.checked
+        });
+    });
+
+    checkboxHideHeader.addEventListener("change", () => {
+        chrome.storage.sync.set({
+            enabled_hide_header: checkboxHideHeader.checked
         });
     });
 });

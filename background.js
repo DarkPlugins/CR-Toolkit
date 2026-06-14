@@ -3,7 +3,8 @@ chrome.runtime.onInstalled.addListener(() => {
         [
             "active_popup_section",
             "enabled_player_resize",
-            "enabled_auto_skip"
+            "enabled_auto_skip",
+            "enabled_hide_header"
         ],
         (data) => {
             const updates = {};
@@ -14,6 +15,10 @@ chrome.runtime.onInstalled.addListener(() => {
 
             if (data.enabled_auto_skip === undefined) {
                 updates.enabled_auto_skip = true;
+            }
+
+            if (data.enabled_hide_header === undefined) {
+                updates.enabled_hide_header = false;
             }
 
             if (data.active_popup_section === undefined) {
