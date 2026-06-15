@@ -3,6 +3,18 @@ const STYLE_ID = "cr-player-resize-style";
 function applyPlayerResize(enabled) {
     let style = document.getElementById(STYLE_ID);
 
+    console.log("Test213");
+    let height;
+    const headerEl = window.CRToolkit.getClassElement("header");
+    if(headerEl && headerEl.style.position === "absolute") {
+        height = "100vh";
+        console.log("Yes");
+    } else {
+       height = "90vh";
+       console.log("Nope")
+    }
+    console.log("Test213");
+
     if (enabled) {
         if (!style) {
             style = document.createElement("style");
@@ -10,7 +22,7 @@ function applyPlayerResize(enabled) {
 
             style.textContent = `
                 .erc-watch-episode .video-player-wrapper {
-                    height: 90vh !important;
+                    height: ${height} !important;
                     transition: height 0.3s ease;
                 }
 
@@ -34,7 +46,9 @@ function initPlayerResize() {
     chrome.storage.sync.get(
         ["enabled_player_resize"],
         (data) => {
-            applyPlayerResize(data.enabled_player_resize ?? true);
+            setTimeout(() => {
+                applyPlayerResize(data.enabled_player_resize ?? true);
+            }, 1250);
         }
     );
 

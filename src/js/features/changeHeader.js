@@ -67,10 +67,7 @@ function initChangeHeader() {
                 news: data.enabled_change_header_news ?? false
             };
 
-            // Timeout to wait for cr to be fully loaded
-            setTimeout(() => {
-                applyChangeHeader(currentState);
-            }, 1250);
+            applyChangeHeader(currentState);
         }
     );
 
