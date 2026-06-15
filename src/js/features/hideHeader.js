@@ -4,7 +4,7 @@ function applyHideHeader(enabled) {
 
     if (!headerEl) return;
 
-    if (enabled && !document.hidden && document.hasFocus()) {
+    if (enabled && window.location.pathname.includes("watch")) {
         headerEl.style.opacity = "0";
         headerEl.style.pointerEvents = "none";
         headerEl.style.transition = "opacity 0.25s";
