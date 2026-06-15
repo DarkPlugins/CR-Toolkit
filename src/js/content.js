@@ -8,3 +8,4 @@ window.addEventListener("scroll", () => {
 
 window.CRToolkit.initPlayerResize();
 window.CRToolkit.initAutoSkip();
+window.CRToolkit.initBetterSearch();
