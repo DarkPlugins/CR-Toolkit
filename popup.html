@@ -99,8 +99,14 @@ body {
     align-items: center;
 }
 
+.child {
+    margin-left: 1rem;
+}
+
 input[type="checkbox"] {
-    display: none;
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
 }
 
 .toggle-label {
@@ -187,6 +193,59 @@ input[type="checkbox"]:checked + .toggle-label::after {
                     <span class="toggle-text">Hide Header on Playback</span>
                     <input type="checkbox" id="toggle-hide-header">
                     <label for="toggle-hide-header" class="toggle-label"></label>
+                </div>    
+                <div class="feat-item">
+                    <span class="toggle-text">Change Header</span>
+                    <input type="checkbox" id="toggle-change-header">
+                    <label for="toggle-change-header" class="toggle-label"></label>
+                </div>
+
+                <div class="feat-item child">
+                    <span class="toggle-text">Remove: Logo</span>
+                    <input type="checkbox" id="toggle-change-header-logo">
+                    <label for="toggle-change-header-logo" class="toggle-label"></label>
+                </div>
+
+                <div class="feat-item child">
+                    <span class="toggle-text">Remove: New</span>
+                    <input type="checkbox" id="toggle-change-header-new">
+                    <label for="toggle-change-header-new" class="toggle-label"></label>
+                </div>
+
+                <div class="feat-item child">
+                    <span class="toggle-text">Remove: Popular</span>
+                    <input type="checkbox" id="toggle-change-header-popular">
+                    <label for="toggle-change-header-popular" class="toggle-label"></label>
+                </div>
+
+                <div class="feat-item child">
+                    <span class="toggle-text">Remove: Simulcast</span>
+                    <input type="checkbox" id="toggle-change-header-simulcast">
+                    <label for="toggle-change-header-simulcast" class="toggle-label"></label>
+                </div>
+
+                <div class="feat-item child">
+                    <span class="toggle-text">Remove: Categories</span>
+                    <input type="checkbox" id="toggle-change-header-categories">
+                    <label for="toggle-change-header-categories" class="toggle-label"></label>
+                </div>
+
+                <div class="feat-item child">
+                    <span class="toggle-text">Remove: Games</span>
+                    <input type="checkbox" id="toggle-change-header-games">
+                    <label for="toggle-change-header-games" class="toggle-label"></label>
+                </div>
+
+                <div class="feat-item child">
+                    <span class="toggle-text">Remove: Store</span>
+                    <input type="checkbox" id="toggle-change-header-store">
+                    <label for="toggle-change-header-store" class="toggle-label"></label>
+                </div>
+
+                <div class="feat-item child">
+                    <span class="toggle-text">Remove: News</span>
+                    <input type="checkbox" id="toggle-change-header-news">
+                    <label for="toggle-change-header-news" class="toggle-label"></label>
                 </div>
             </div>
 

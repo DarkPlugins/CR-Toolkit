@@ -24,6 +24,7 @@
         "src/js/features/playerResize.js",
         "src/js/features/autoSkip.js",
         "src/js/features/hideHeader.js",
+        "src/js/features/changeHeader.js",
         "src/js/content.js"
       ]
     }

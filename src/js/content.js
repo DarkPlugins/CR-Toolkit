@@ -9,3 +9,4 @@ window.addEventListener("scroll", () => {
 window.CRToolkit.initPlayerResize();
 window.CRToolkit.initAutoSkip();
 window.CRToolkit.initHideHeader();
+window.CRToolkit.initChangeHeader();
