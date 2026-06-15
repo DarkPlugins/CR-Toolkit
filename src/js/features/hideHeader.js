@@ -6,7 +6,7 @@ function applyHideHeader(enabled) {
 
     if (!headerEl) return;
 
-    if (enabled) {
+    if (enabled && !document.hidden && document.hasFocus()) {
         headerEl.style.opacity = "0";
         headerEl.style.pointerEvents = "none";
         headerEl.style.transition = "opacity 0.5s";
