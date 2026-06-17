@@ -1,30 +1,37 @@
-function applyHideHeader(enabled) {
-    const headerEl = window.CRToolkit.getClassElement("header_sub");
-    const headerBackEl = window.CRToolkit.getClassElement("header");
+function applyHideHeader() {
+    chrome.storage.sync.get(
+        ["enabled_hide_header"],
+        (data) => {
+            const enabled = data.enabled_hide_header;
 
-    if (!headerEl) return;
+            const headerEl = window.CRToolkit.getClassElement("header_sub");
+            const headerBackEl = window.CRToolkit.getClassElement("header");
 
-    if (enabled && window.location.pathname.includes("watch")) {
-        headerEl.style.opacity = "0";
-        headerEl.style.pointerEvents = "none";
-        headerEl.style.transition = "opacity 0.25s";
+            if (!headerEl) return;
 
-        if (headerBackEl) {
-            headerBackEl.style.position = "absolute";
+            if (enabled && window.location.pathname.includes("watch")) {
+                headerEl.style.opacity = "0";
+                headerEl.style.pointerEvents = "none";
+                headerEl.style.transition = "opacity 0.25s";
+
+                if (headerBackEl) {
+                    headerBackEl.style.position = "absolute";
+                }
+
+                // Show when hovering over the top edge of the screen
+                document.addEventListener("mousemove", handleMouseMove);
+            } else {
+                headerEl.style.opacity = "1";
+                headerEl.style.pointerEvents = "auto";
+
+                if (headerBackEl) {
+                    headerBackEl.style.position = "relative";
+                }
+
+                document.removeEventListener("mousemove", handleMouseMove);
+            }
         }
-
-        // Show when hovering over the top edge of the screen
-        document.addEventListener("mousemove", handleMouseMove);
-    } else {
-        headerEl.style.opacity = "1";
-        headerEl.style.pointerEvents = "auto";
-
-        if (headerBackEl) {
-            headerBackEl.style.position = "relative";
-        }
-
-        document.removeEventListener("mousemove", handleMouseMove);
-    }
+    );
 }
 
 function handleMouseMove(event) {
@@ -43,23 +50,17 @@ function handleMouseMove(event) {
 }
 
 function initHideHeader() {
-    chrome.storage.sync.get(
-        ["enabled_hide_header"],
-        (data) => {
-            applyHideHeader(data.enabled_hide_header);
-        }
-    );
-
+    // Apply listener
     chrome.storage.onChanged.addListener((changes, area) => {
         if (area !== "sync") return;
 
         if (changes.enabled_hide_header) {
-            applyHideHeader(
-                changes.enabled_hide_header.newValue
-            );
+            apply();
         }
     });
 }
 
 window.CRToolkit = window.CRToolkit || {};
-window.CRToolkit.initHideHeader = initHideHeader;
+window.CRToolkit.HideHeader = window.CRToolkit.HideHeader || {};
+window.CRToolkit.HideHeader.init = initHideHeader;
+window.CRToolkit.HideHeader.apply = applyHideHeader;

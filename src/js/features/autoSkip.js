@@ -88,19 +88,24 @@ function stop() {
     }
 }
 
-function applyAutoSkip(enabled) {
-    if (enabled) start();
-    else stop();
+function applyAutoSkip() {
+    chrome.storage.sync.get(["enabled_auto_skip"], (data) => {
+        if (Boolean(data.enabled_auto_skip) && window.CRToolkit && window.CRToolkit.currentUrl &&
+            window.CRToolkit.currentUrl.indexOf("watch") !== -1)
+        {
+            start();
+        }
+        else {
+            stop();
+        }
+    });
 }
 
 function initAutoSkip() {
     if (initialized) return;
     initialized = true;
 
-    chrome.storage.sync.get(["enabled_auto_skip"], (data) => {
-        applyAutoSkip(Boolean(data.enabled_auto_skip));
-    });
-
+    // Apply listener
     chrome.storage.onChanged.addListener((changes, area) => {
         if (area !== "sync") return;
 
@@ -111,4 +116,6 @@ function initAutoSkip() {
 }
 
 window.CRToolkit = window.CRToolkit || {};
-window.CRToolkit.initAutoSkip = initAutoSkip;
+window.CRToolkit.AutoSkip = window.CRToolkit.AutoSkip || {};
+window.CRToolkit.AutoSkip.init = initAutoSkip;
+window.CRToolkit.AutoSkip.apply = applyAutoSkip;

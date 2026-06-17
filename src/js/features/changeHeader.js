@@ -71,6 +71,7 @@ function initChangeHeader() {
         }
     );
 
+    // Apply listener
     chrome.storage.onChanged.addListener((changes, area) => {
         if (area !== "sync") return;
         if (!currentState) return;
@@ -107,4 +108,5 @@ function initChangeHeader() {
 }
 
 window.CRToolkit = window.CRToolkit || {};
-window.CRToolkit.initChangeHeader = initChangeHeader;
+window.CRToolkit.ChangeHeader = window.CRToolkit.ChangeHeader || {};
+window.CRToolkit.ChangeHeader.init = initChangeHeader;
