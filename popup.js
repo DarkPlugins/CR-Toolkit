@@ -33,6 +33,9 @@ document.addEventListener("DOMContentLoaded", () => {
         checkBoxChangeHeaderStore,
         checkBoxChangeHeaderNews
     ];
+    // Feature: Change Colors
+    const colorList = document.getElementById("list-colors"); 
+    const btnAddNewColor = document.getElementById('btn-add-color');
 
     const navButtons = document.querySelectorAll(".nav-btn");
     const sections = document.querySelectorAll(".section-page");
@@ -110,6 +113,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 data.enabled_change_header_news ?? false;
 
             updateHeaderChildrenState(checkBoxChangeHeaderChildren, checkBoxChangeHeader.checked);
+
+            // Feature: Change-Colors
+            if(colorList) {
+                
+            }
 
             showSection(
                 data.active_popup_section ?? "s-general"
@@ -200,4 +208,40 @@ document.addEventListener("DOMContentLoaded", () => {
             enabled_change_header_news: checkBoxChangeHeaderNews.checked
         });
     });
+
+    btnAddNewColor.addEventListener('click', addNewColor);
 });
+
+let colorCounter = 0;
+
+function addNewColor() {
+    const colorList = document.getElementById("list-colors");
+    if (!colorList) return;
+
+    colorCounter += 1;
+    const row = document.createElement('div');
+    row.className = 'color-row';
+
+    const from = document.createElement('input');
+    from.type = 'color';
+    from.name = `color-from-${colorCounter}`;
+    from.id = `color-from-${colorCounter}`;
+    from.value = '#FF640A';
+
+    const sep = document.createElement('span');
+    sep.textContent = '→';
+
+    const to = document.createElement('input');
+    to.type = 'color';
+    to.name = `color-to-${colorCounter}`;
+    to.id = `color-to-${colorCounter}`;
+    to.value = '#b7183e';
+
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.textContent = '✕';
+    removeBtn.addEventListener('click', () => row.remove());
+
+    row.append(from, sep, to, removeBtn);
+    colorList.appendChild(row);
+}

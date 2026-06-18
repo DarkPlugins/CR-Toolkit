@@ -99,6 +99,78 @@ body {
     align-items: center;
 }
 
+.feat-head-multi {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.feat-item button {
+    width: 30px;
+    height: 30px;
+    border-radius: 100%;
+    border: 1px solid var(--secondary-accent);
+    background-color: var(--primary-accent);
+    color: black;
+}
+
+.feat-item button:hover {
+    transition: background-color, border 0.2s;
+    cursor: pointer;
+    border: 1px solid var(--primary-accent);
+    background-color: var(--secondary-accent);
+}
+
+.list {
+    width: 300px;
+    max-height: 210px;
+    margin: 10px;
+    padding: 10px;
+    border: 1px solid var(--primary-accent);
+    text-align: center;
+    overflow: auto;
+}
+
+.list .small {
+    font-size: 15px;
+}
+
+.color-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    margin: 10px;
+    border: none;
+      border-radius: 0;
+      padding: 0;
+}
+
+input[type="color"] {
+    border: 1x solid transparent;
+    width: 60px;
+    height: 30px;
+    border-radius: 5px;
+    padding: 0;
+    border: 1px solid var(--primary-accent);
+    background-color: transparent;
+}
+
+input[type="color"]::-moz-color-swatch {
+  border: none;
+}
+
+input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+  border-radius: 0;
+}
+
+input[type="color"]::-webkit-color-swatch {
+  border: none;
+}
+
 .child {
     margin-left: 1rem;
 }
@@ -189,11 +261,22 @@ input[type="checkbox"]:checked + .toggle-label::after {
             </div>
 
             <div class="section-page" id="s-appearance">
+                <div class="feat-item" style="flex-direction: column;">
+                    <div class="feat-head-multi">
+                        <span class="toggle-text">Colors</span>
+                        <button id="btn-add-color">+</button>
+                    </div>
+                    <div class="list" id="list-colors">
+                        <span class="small">Add the colors you want to change</span>
+                    </div>
+                </div>
+
                 <div class="feat-item">
                     <span class="toggle-text">Hide Header on Playback</span>
                     <input type="checkbox" id="toggle-hide-header">
                     <label for="toggle-hide-header" class="toggle-label"></label>
-                </div>    
+                </div>
+
                 <div class="feat-item">
                     <span class="toggle-text">Change Header</span>
                     <input type="checkbox" id="toggle-change-header">
