@@ -3,26 +3,112 @@
 <head>
 <meta charset="UTF-8">
 <style>
-/* Dark Mode Hintergrund */
+:root {
+    --primary-accent: #FF640A;
+    --secondary-accent: #b7183e;
+}
+
 body {
-    font-family: sans-serif;
-    padding: 20px;
-    background-color: #282828;
-    color: #FF640A;
-    min-width: 180px;
-    min-height: 25px;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
+    width: 400px;
+    height: 500px;
+    padding: 10px;
+    font-family: sans-serif;
+    background-color: #282828;
+    color: var(--primary-accent);
 }
 
-/* Checkbox verstecken */
-input[type="checkbox"] {
+.content {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
+}
+
+.content h1 {
+    text-align: center;
+    font-size: 35px;
+    margin-bottom: 0;
+}
+
+.content span {
+    text-align: left;
+    font-size: 20px;
+}
+
+#footer {
+    text-align: center;
+    font-size: 15px;
+}
+
+.content a {
+    color: var(--primary-accent);
+    text-decoration: none;
+}
+
+.content a:hover {
+    color: var(--secondary-accent);
+}
+
+.navbar {
+    display: flex;
+    gap: 1rem;
+}
+
+.nav-btn {
+    flex: 1;
+    padding: 8px;
+    background: transparent;
+    border: 1px solid var(--primary-accent);
+    border-radius: 10px;
+    color: var(--primary-accent);
+    cursor: pointer;
+}
+
+.nav-btn.active {
+    background: var(--primary-accent);
+    color: #282828;
+    font-weight: bold;
+}
+
+.section-container {
+    width: 100%;
+    border: 1px solid var(--primary-accent);
+    border-radius: 10px;
+    height: 380px;
+    overflow: hidden;
+}
+
+.section-page {
     display: none;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
 }
 
-/* Toggle-Stil */
+.section-page.active {
+    display: block;
+}
+
+.feat-item {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 10px;
+    width: auto;
+    align-items: center;
+}
+
+.child {
+    margin-left: 1rem;
+}
+
+input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
 .toggle-label {
     position: relative;
     display: inline-block;
@@ -61,7 +147,6 @@ input[type="checkbox"]:checked + .toggle-label::after {
     transform: translateX(22px);
 }
 
-/* Text */
 .toggle-text {
     font-size: 16px;
     user-select: none;
@@ -71,9 +156,109 @@ input[type="checkbox"]:checked + .toggle-label::after {
 </head>
 
 <body>
-<span class="toggle-text">Player Resize</span>
-<input type="checkbox" id="toggle">
-<label for="toggle" class="toggle-label"></label>
+    <div class="content">
+        <h1>CR Toolkit</h1>
+
+        <div class="navbar">
+            <button class="nav-btn" data-section="s-general">
+                General
+            </button>
+
+            <button class="nav-btn" data-section="s-appearance">
+                Appearance
+            </button>
+
+            <button class="nav-btn" data-section="s-options">
+                Options
+            </button>
+        </div>
+
+        <div class="section-container">
+            <div class="section-page" id="s-general">
+                <div class="feat-item">
+                    <span class="toggle-text">Player Resize</span>
+                    <input type="checkbox" id="toggle-player-resize">
+                    <label for="toggle-player-resize" class="toggle-label"></label>
+                </div>
+
+                <div class="feat-item">
+                    <span class="toggle-text">Auto Skip OP/ED</span>
+                    <input type="checkbox" id="toggle-auto-skip">
+                    <label for="toggle-auto-skip" class="toggle-label"></label>
+                </div>
+            </div>
+
+            <div class="section-page" id="s-appearance">
+                <div class="feat-item">
+                    <span class="toggle-text">Hide Header on Playback</span>
+                    <input type="checkbox" id="toggle-hide-header">
+                    <label for="toggle-hide-header" class="toggle-label"></label>
+                </div>    
+                <div class="feat-item">
+                    <span class="toggle-text">Change Header</span>
+                    <input type="checkbox" id="toggle-change-header">
+                    <label for="toggle-change-header" class="toggle-label"></label>
+                </div>
+
+                <div class="feat-item child">
+                    <span class="toggle-text">Remove: Logo</span>
+                    <input type="checkbox" id="toggle-change-header-logo">
+                    <label for="toggle-change-header-logo" class="toggle-label"></label>
+                </div>
+
+                <div class="feat-item child">
+                    <span class="toggle-text">Remove: New</span>
+                    <input type="checkbox" id="toggle-change-header-new">
+                    <label for="toggle-change-header-new" class="toggle-label"></label>
+                </div>
+
+                <div class="feat-item child">
+                    <span class="toggle-text">Remove: Popular</span>
+                    <input type="checkbox" id="toggle-change-header-popular">
+                    <label for="toggle-change-header-popular" class="toggle-label"></label>
+                </div>
+
+                <div class="feat-item child">
+                    <span class="toggle-text">Remove: Simulcast</span>
+                    <input type="checkbox" id="toggle-change-header-simulcast">
+                    <label for="toggle-change-header-simulcast" class="toggle-label"></label>
+                </div>
+
+                <div class="feat-item child">
+                    <span class="toggle-text">Remove: Categories</span>
+                    <input type="checkbox" id="toggle-change-header-categories">
+                    <label for="toggle-change-header-categories" class="toggle-label"></label>
+                </div>
+
+                <div class="feat-item child">
+                    <span class="toggle-text">Remove: Games</span>
+                    <input type="checkbox" id="toggle-change-header-games">
+                    <label for="toggle-change-header-games" class="toggle-label"></label>
+                </div>
+
+                <div class="feat-item child">
+                    <span class="toggle-text">Remove: Store</span>
+                    <input type="checkbox" id="toggle-change-header-store">
+                    <label for="toggle-change-header-store" class="toggle-label"></label>
+                </div>
+
+                <div class="feat-item child">
+                    <span class="toggle-text">Remove: News</span>
+                    <input type="checkbox" id="toggle-change-header-news">
+                    <label for="toggle-change-header-news" class="toggle-label"></label>
+                </div>
+            </div>
+
+            <div class="section-page" id="s-options">
+
+            </div>
+        </div>
+
+        <span id="footer">
+            Made with ❤️ by
+            <a href="https://darkplugins.de" target="_blank">DarkPlugins</a>
+        </span>
+    </div>
 
 <script src="popup.js"></script>
 </body>
