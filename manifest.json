@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "CR-Toolkit",
-  "version": "1.2",
+  "version": "1.3.0",
   "description": "Enhances the Crunchyroll web interface with additional controls and convenience features, making anime watching more fun :)",
   "author": "DarkPlugins",
   "icons": {
