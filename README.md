@@ -25,7 +25,7 @@ Modify the appearance of the Crunchyroll header to better match your preferences
 ### Manual Installation
 
 1. Download the latest release files from the project's Releases page.
-2. Install the extension using your preferred browser extension platform.
+2. Install the extension using your preferred browser extension platform.  Drag & Drop the .crx file into the extension page or extract the .zip file, enable developer-mode and "load unpacked files".
 3. Refresh any open Crunchyroll tabs.
 4. Open Crunchyroll and configure the toolkit settings to your liking using the pop-up.
 
