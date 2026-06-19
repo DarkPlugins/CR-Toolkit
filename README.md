@@ -1,6 +1,6 @@
 # CR-Toolkit
 
-CR-Toolkit is a browser extension for Crunchyroll that offers various features to enhance the anime-watching experience.
+CR-Toolkit is a browser extension for Crunchyroll that offers various features to enhance your anime-watching experience.
 
 ## Features
 
