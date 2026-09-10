@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
     const checkboxPlayerResize = document.getElementById("toggle-player-resize");
     const checkboxAutoSkip = document.getElementById("toggle-auto-skip");
+    const checkboxBetterSearch = document.getElementById("toggle-better-search");
 
     const navButtons = document.querySelectorAll(".nav-btn");
     const sections = document.querySelectorAll(".section-page");
@@ -27,6 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
         [
             "enabled_player_resize",
             "enabled_auto_skip",
+            "enabled_better_search",
             "active_popup_section"
         ],
         (data) => {
@@ -35,6 +37,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
             checkboxAutoSkip.checked =
                 data.enabled_auto_skip ?? true;
+
+            checkboxBetterSearch.checked =
+                data.enabled_better_search ?? true;
 
             showSection(
                 data.active_popup_section ?? "s-general"
@@ -59,6 +64,12 @@ document.addEventListener("DOMContentLoaded", () => {
     checkboxAutoSkip.addEventListener("change", () => {
         chrome.storage.sync.set({
             enabled_auto_skip: checkboxAutoSkip.checked
+        });
+    });
+
+    checkboxBetterSearch.addEventListener("change", () => {
+        chrome.storage.sync.set({
+            enabled_better_search: checkboxBetterSearch.checked
         });
     });
 });
