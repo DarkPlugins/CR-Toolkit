@@ -17,6 +17,7 @@ window.addEventListener("scroll", () => {
 
 function initFeatures() {
     window.CRToolkit.AutoSkip.init();
+    window.CRToolkit.ChangeColors.init();
     window.CRToolkit.HideHeader.init();
     window.CRToolkit.PlayerResize.init();
     window.CRToolkit.ChangeHeader.init();

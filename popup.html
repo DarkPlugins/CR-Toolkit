@@ -107,6 +107,40 @@ body {
     width: 100%;
 }
 
+.color-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.color-actions #btn-add-page-colors {
+    width: 42px;
+    border-radius: 6px;
+}
+
+.color-actions #btn-add-page-colors svg {
+    width: 18px;
+    height: 18px;
+    display: block;
+    margin: auto;
+}
+
+.color-sort {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 8px;
+    font-size: 14px;
+}
+
+#color-sort {
+    padding: 4px 8px;
+    border: 1px solid var(--primary-accent);
+    border-radius: 5px;
+    background: #282828;
+    color: var(--primary-accent);
+}
+
 .feat-item button {
     width: 30px;
     height: 30px;
@@ -264,7 +298,25 @@ input[type="checkbox"]:checked + .toggle-label::after {
                 <div class="feat-item" style="flex-direction: column;">
                     <div class="feat-head-multi">
                         <span class="toggle-text">Colors</span>
-                        <button id="btn-add-color">+</button>
+                        <div class="color-actions">
+                            <button id="btn-add-page-colors" type="button"
+                                title="Add all colors from the current Crunchyroll page"
+                                aria-label="Add all colors from the current Crunchyroll page">
+                                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                    <path d="M12 3v12m0 0 5-5m-5 5-5-5M5 21h14"
+                                        fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                            </button>
+                            <button id="btn-add-color" type="button" title="Add a color">+</button>
+                        </div>
+                    </div>
+                    <div class="color-sort">
+                        <label for="color-sort">Sort by</label>
+                        <select id="color-sort">
+                            <option value="added">Added</option>
+                            <option value="color">Color</option>
+                        </select>
                     </div>
                     <div class="list" id="list-colors">
                         <span class="small">Add the colors you want to change</span>
