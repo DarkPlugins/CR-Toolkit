@@ -1,10 +1,22 @@
-const SKIP_SELECTOR = 'button[data-variant="primary"]';
+const SKIP_MARKER_SELECTORS = [
+    // Current player: these markers are independent of the selected language.
+    '[data-testid="skipIntroText"]',
+    '[data-testid="skip-intro-button"]',
+    '[data-testid="skipButton"]',
+    'svg[data-testid="skip-intro-icon"]',
+    'svg[data-testid="skip-recap-icon"]',
+    'svg[data-testid="skip-credits-icon"]',
+    'svg[data-testid="skip-outro-icon"]',
+    '[data-testid*="skip"][data-testid*="icon"]'
+];
+const CLICKABLE_SELECTOR = 'button, [role="button"], [tabindex="0"]';
 const PLAY_DELAY_MS = 1200;
 const CHECK_INTERVAL = 800;
 
 let initialized = false;
 let intervalId = null;
 let lastClick = 0;
+let skipInProgress = false;
 
 function wait(ms) {
     return new Promise(r => setTimeout(r, ms));
@@ -26,51 +38,87 @@ function isVisible(el) {
         rect.height > 0 &&
         style.visibility !== "hidden" &&
         style.display !== "none" &&
-        style.opacity !== "0"
+        style.opacity !== "0" &&
+        style.pointerEvents !== "none" &&
+        el.getAttribute("aria-hidden") !== "true" &&
+        !el.disabled
     );
 }
 
-async function trySkip() {
-    const btn = document.querySelector(SKIP_SELECTOR);
+function getSkipButton() {
+    for (const selector of SKIP_MARKER_SELECTORS) {
+        const marker = document.querySelector(selector);
+        if (!marker) continue;
 
-    if (!btn || !isVisible(btn)) return;
+        const candidates = [
+            marker.closest(CLICKABLE_SELECTOR),
+            marker.matches(CLICKABLE_SELECTOR) ? marker : null,
+            marker.querySelector(CLICKABLE_SELECTOR),
+            marker
+        ];
+
+        const button = candidates.find(isVisible);
+        if (button) return button;
+    }
+
+    // Legacy player fallback. Restrict it to the player controls so that
+    // unrelated primary buttons elsewhere on the page are never clicked.
+    const legacyButton = document.querySelector(
+        '[data-testid="player-controls-root"] button[data-variant="primary"]'
+    );
+
+    return isVisible(legacyButton) ? legacyButton : null;
+}
+
+async function trySkip() {
+    if (skipInProgress) return;
+
+    const btn = getSkipButton();
+
+    if (!btn) return;
 
     const now = Date.now();
     if (now - lastClick < 2500) return;
 
-    const video = getVideo();
+    skipInProgress = true;
 
-    if (video) {
-        if (video.paused) {
-            const resumed = await Promise.race([
-                new Promise(resolve => {
-                    const onPlay = () => {
-                        video.removeEventListener("play", onPlay);
-                        video.removeEventListener("playing", onPlay);
-                        resolve(true);
-                    };
+    try {
+        const video = getVideo();
 
-                    video.addEventListener("play", onPlay, { once: true });
-                    video.addEventListener("playing", onPlay, { once: true });
-                }),
-                wait(2500).then(() => false)
-            ]);
+        if (video) {
+            if (video.paused) {
+                const resumed = await Promise.race([
+                    new Promise(resolve => {
+                        const onPlay = () => {
+                            video.removeEventListener("play", onPlay);
+                            video.removeEventListener("playing", onPlay);
+                            resolve(true);
+                        };
 
-            if (!resumed && video.paused) return;
+                        video.addEventListener("play", onPlay, { once: true });
+                        video.addEventListener("playing", onPlay, { once: true });
+                    }),
+                    wait(2500).then(() => false)
+                ]);
+
+                if (!resumed && video.paused) return;
+            }
+
+            await wait(PLAY_DELAY_MS);
+        } else {
+            await wait(PLAY_DELAY_MS);
         }
 
-        await wait(PLAY_DELAY_MS);
-    } else {
-        await wait(PLAY_DELAY_MS);
+        const currentBtn = getSkipButton();
+        if (!currentBtn) return;
+
+        lastClick = Date.now();
+
+        // IMPORTANT: no MouseEvent spam anymore
+        currentBtn.click();
+    } finally {
+        skipInProgress = false;
     }
-
-    const currentBtn = document.querySelector(SKIP_SELECTOR);
-    if (!currentBtn || !isVisible(currentBtn)) return;
-
-    lastClick = Date.now();
-
-    // IMPORTANT: no MouseEvent spam anymore
-    currentBtn.click();
 }
 
 function start() {
