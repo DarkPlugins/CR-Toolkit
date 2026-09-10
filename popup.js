@@ -37,6 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const btnAddNewColor = document.getElementById('btn-add-color');
     const btnAddPageColors = document.getElementById('btn-add-page-colors');
     const colorSort = document.getElementById('color-sort');
+    const checkboxBetterSearch = document.getElementById("toggle-better-search");
 
     const navButtons = document.querySelectorAll(".nav-btn");
     const sections = document.querySelectorAll(".section-page");
@@ -75,7 +76,8 @@ document.addEventListener("DOMContentLoaded", () => {
             "enabled_change_header_store",
             "enabled_change_header_news",
             "color_mappings",
-            "color_sort_order"
+            "color_sort_order",
+            "enabled_better_search"
         ],
         (data) => {
             checkboxPlayerResize.checked =
@@ -120,6 +122,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 colorSort.value = data.color_sort_order === 'color' ? 'color' : 'added';
             }
             renderColorMappings(data.color_mappings ?? []);
+            checkboxBetterSearch.checked =
+                data.enabled_better_search ?? true;
 
             showSection(
                 data.active_popup_section ?? "s-general"
@@ -144,6 +148,12 @@ document.addEventListener("DOMContentLoaded", () => {
     checkboxAutoSkip.addEventListener("change", () => {
         chrome.storage.sync.set({
             enabled_auto_skip: checkboxAutoSkip.checked
+        });
+    });
+
+    checkboxBetterSearch.addEventListener("change", () => {
+        chrome.storage.sync.set({
+            enabled_better_search: checkboxBetterSearch.checked
         });
     });
 
