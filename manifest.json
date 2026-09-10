@@ -8,7 +8,7 @@
     "48": "icon.png",
     "128": "icon.png"
   },
-  "permissions": ["storage", "scripting"],
+  "permissions": ["storage", "scripting", "activeTab"],
   "host_permissions": ["*://www.crunchyroll.com/*"],
   "action": {
     "default_popup": "popup.html",
@@ -24,6 +24,7 @@
         "src/js/features/playerResize.js",
         "src/js/features/autoSkip.js",
         "src/js/features/keyboardSeek.js",
+        "src/js/features/changeColors.js",
         "src/js/features/hideHeader.js",
         "src/js/features/changeHeader.js",
         "src/js/content.js"
