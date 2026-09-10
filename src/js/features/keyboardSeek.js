@@ -1,3 +1,4 @@
+(() => {
 const SEEK_BUTTON_SELECTORS = {
     backward: [
         '[data-testid="jump-backward-button"]',
@@ -99,3 +100,4 @@ function initKeyboardSeek() {
 window.CRToolkit = window.CRToolkit || {};
 window.CRToolkit.KeyboardSeek = window.CRToolkit.KeyboardSeek || {};
 window.CRToolkit.KeyboardSeek.init = initKeyboardSeek;
+})();
