@@ -123,6 +123,103 @@ test('headers cover late DOM elements and restore original styles on toggle and 
     assert.equal(await page.evaluate(() => document.documentElement.classList.contains('cr-hide-header')), false);
 });
 
+test('playback header stays usable in dropdowns and resets when leaving the tab', async t => {
+    const page = await fixture(t, {
+        settings: { enabled_hide_header: true },
+        html: `<style>
+            body { margin: 0; height: 100vh; }
+            .erc-large-header { height: 60px; width: 100vw; background: gray; }
+            #menu { position: absolute; top: 60px; left: 20px; width: 200px; height: 200px; }
+        </style><header class="erc-large-header"><button>Menu</button>
+            <div id="menu"><button id="choice">Choose</button></div>
+            <div class="header-actions" style="position:absolute;right:20px;top:10px"></div>
+        </header>`
+    });
+    await page.addScriptTag({ path: path.join(root, 'popup.js') });
+    await feature(page, 'settingsPanel', 'SettingsPanel');
+    await feature(page, 'hideHeader', 'HideHeader');
+    const isVisible = () => page.locator('.erc-large-header').evaluate(el => getComputedStyle(el).pointerEvents === 'auto');
+
+    await page.mouse.move(25, 20);
+    assert.equal(await isVisible(), true);
+    await page.mouse.move(30, 150);
+    await page.waitForTimeout(250);
+    assert.equal(await isVisible(), true, 'Dropdown below the reveal area stays interactive');
+    await page.locator('#choice').click();
+    await page.locator('.control-button').click();
+    await page.locator('[data-section="s-appearance"]').hover();
+    await page.waitForTimeout(250);
+    assert.equal(await isVisible(), true, 'Settings inside the shadow root keep the header visible');
+    await page.mouse.move(700, 500);
+    await page.waitForFunction(() => !document.documentElement.classList.contains('cr-header-visible'));
+
+    for (const reason of ['mouseleave', 'blur', 'visibilitychange']) {
+        await page.mouse.move(25, 20);
+        assert.equal(await isVisible(), true);
+        await page.evaluate(reason => {
+            if (reason === 'visibilitychange') {
+                Object.defineProperty(document, 'hidden', { configurable: true, value: true });
+            }
+            (reason === 'blur' ? window : document).dispatchEvent(new Event(reason));
+        }, reason);
+        assert.equal(await isVisible(), false, `${reason} clears the reveal state`);
+        await page.evaluate(() => { delete document.hidden; });
+        await page.mouse.move(700, 500);
+    }
+});
+
+test('an expanded Crunchyroll profile menu keeps the header visible until it closes', async t => {
+    const page = await fixture(t, {
+        settings: { enabled_hide_header: true },
+        html: `<style>
+            body { margin: 0; height: 100vh; }
+            .erc-large-header { position: relative; z-index: 2; height: 60px; background: gray; }
+            #user-menu { position: absolute; top: 60px; width: 200px; height: 200px; }
+            #backdrop { position: fixed; inset: 60px 0 0; background: #8888; }
+        </style><header class="erc-large-header">
+            <div role="button" tabindex="0" aria-label="User Menu" aria-haspopup="menu"
+                aria-expanded="false" aria-controls="user-menu">Profile</div>
+            <div id="user-menu" role="menu" hidden>Profile settings</div>
+        </header><div id="backdrop" hidden></div>`
+    });
+    await page.evaluate(() => {
+        const trigger = document.querySelector('[aria-controls="user-menu"]');
+        const setOpen = open => {
+            trigger.setAttribute('aria-expanded', String(open));
+            document.getElementById('user-menu').hidden = !open;
+            document.getElementById('backdrop').hidden = !open;
+        };
+        trigger.onclick = () => setOpen(trigger.getAttribute('aria-expanded') !== 'true');
+        document.getElementById('backdrop').onclick = () => setOpen(false);
+        document.addEventListener('keydown', event => { if (event.key === 'Escape') setOpen(false); });
+    });
+    await feature(page, 'hideHeader', 'HideHeader');
+    const isVisible = () => page.locator('.erc-large-header').evaluate(el => getComputedStyle(el).pointerEvents === 'auto');
+    for (const closeWith of ['backdrop', 'Escape']) {
+        await page.mouse.move(25, 20);
+        await page.getByRole('button', { name: 'User Menu' }).click();
+        await page.mouse.move(700, 500);
+        await page.waitForTimeout(300);
+        assert.equal(await isVisible(), true, 'Open profile menu holds the header outside the hover area');
+        await page.evaluate(() => document.dispatchEvent(new Event('mouseleave')));
+        assert.equal(await isVisible(), true, 'Leaving the viewport does not strand the open menu');
+        if (closeWith === 'backdrop') await page.locator('#backdrop').click({ position: { x: 700, y: 440 } });
+        else await page.keyboard.press('Escape');
+        await page.waitForFunction(() => !document.documentElement.classList.contains('cr-header-visible'));
+        assert.equal(await isVisible(), false, 'Closing the menu restores auto-hide without another mouse move');
+        assert.equal(await page.locator('#backdrop').isVisible(), false);
+    }
+    // Menu state changes must also reveal a header opened via the keyboard.
+    await page.evaluate(() => document.querySelector('[aria-controls="user-menu"]').click());
+    await page.waitForFunction(() => document.documentElement.classList.contains('cr-header-visible'));
+    await page.evaluate(() => window.dispatchEvent(new Event('blur')));
+    assert.equal(await isVisible(), false);
+    await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+    assert.equal(await isVisible(), true, 'Returning to the tab restores the still-open menu');
+    await page.evaluate(() => document.querySelector('[aria-controls="user-menu"]').remove());
+    await page.waitForFunction(() => !document.documentElement.classList.contains('cr-header-visible'));
+});
+
 test('colors detect CSSOM rule insertion without a DOM mutation', async t => {
     const page = await fixture(t, {
         html: '<style id="sheet"></style><div id="sample"></div>',
@@ -197,7 +294,7 @@ test('extension popup points users to the inline Crunchyroll settings', async t 
         await page.locator('.github-link').getAttribute('href'),
         'https://github.com/darkplugins/cr-toolkit'
     );
-    assert.match(await page.locator('.footer').textContent(), /Made with.*DarkPlugins/);
+    assert.match(await page.locator('.footer').textContent(), /Made with.*DarkPlugins/s);
 });
 
 test('inline settings panel is inserted first and stores its accent color', async t => {
@@ -245,6 +342,41 @@ test('inline settings panel is inserted first and stores its accent color', asyn
         document.querySelector('[data-cr-toolkit-control]').shadowRoot.querySelector('#reset-accent-color').click();
     });
     assert.equal(await page.evaluate(() => window.settings.popup_accent_color), '#ff6f00');
+});
+
+test('Appearance toggles keep the popup layout and scroll position stable', async t => {
+    const page = await fixture(t, {
+        route: '/browse',
+        html: '<div class="header-actions" style="position:fixed;top:8px;right:60px"></div>',
+        settings: { enabled_change_header: true, active_popup_section: 's-appearance' }
+    });
+    await page.setViewportSize({ width: 460, height: 600 });
+    await page.addScriptTag({ path: path.join(root, 'popup.js') });
+    await feature(page, 'settingsPanel', 'SettingsPanel');
+    await feature(page, 'changeHeader', 'ChangeHeader');
+    await page.locator('.control-button').click();
+    await page.waitForTimeout(250);
+    await page.locator('#s-appearance').evaluate(el => { el.scrollTop = el.scrollHeight; });
+    const layout = () => page.evaluate(() => {
+        const shadow = document.querySelector('[data-cr-toolkit-control]').shadowRoot;
+        return ['.panel', '.panel-inner', '.navbar', '.section-container', '#s-appearance'].map(selector => {
+            const el = shadow.querySelector(selector);
+            return { selector, top: el.getBoundingClientRect().top, scrollTop: el.scrollTop };
+        });
+    });
+    const before = await layout();
+    for (const name of ['store', 'news', 'games', 'store']) {
+        await page.locator(`label[for="toggle-change-header-${name}"]`).click();
+        assert.deepEqual(await layout(), before, `Clicking ${name} preserves the popup layout`);
+    }
+    assert.equal(await page.evaluate(() => window.settings.enabled_change_header_store), false);
+    assert.equal(await page.evaluate(() => window.settings.enabled_change_header_news), true);
+    // Keyboard focus must scroll only the Appearance list, never its outer containers.
+    await page.locator('#toggle-change-header').focus();
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Space');
+    assert.equal(await page.evaluate(() => window.settings.enabled_change_header_logo), true);
+    assert.deepEqual((await layout()).slice(0, 4), before.slice(0, 4));
 });
 
 test('all isolated content scripts initialize together without global collisions', async t => {

@@ -210,6 +210,7 @@
         }
 
         .feat-item {
+            position: relative;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -253,6 +254,12 @@
 
         input[type="checkbox"] {
             position: absolute;
+            right: 11px;
+            top: 50%;
+            width: 40px;
+            height: 23px;
+            margin: 0;
+            transform: translateY(-50%);
             opacity: 0;
             pointer-events: none;
         }
