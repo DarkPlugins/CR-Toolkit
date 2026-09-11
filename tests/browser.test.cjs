@@ -187,24 +187,64 @@ test('keyboard seeking respects modifier keys, sliders, and editable targets', a
     assert.deepEqual(result, { before: 0, clicks: 1, allowed: false });
 });
 
-test('popup uses consistent defaults and commits color changes only on change', async t => {
-    const html = readFileSync(path.join(root, 'popup.html'), 'utf8').replace('<script src="popup.js"></script>', '');
-    const page = await fixture(t, { html, route: '/popup', settings: { active_popup_section: 'removed-section' } });
-    await page.addScriptTag({ path: path.join(root, 'popup.js') });
-    await page.evaluate(() => document.dispatchEvent(new Event('DOMContentLoaded')));
-    assert.equal(await page.locator('#toggle-hide-header').isChecked(), false);
-    assert.equal(await page.locator('#s-general').evaluate(el => el.classList.contains('active')), true);
-    assert.equal(await page.evaluate(() => window.storageWrites.length), 0);
-    await page.locator('[data-section="s-appearance"]').click();
-    await page.locator('#btn-add-color').click();
-    const writes = await page.evaluate(() => window.storageWrites.length);
-    await page.locator('.color-to').evaluate(el => {
-        el.value = '#123456';
-        el.dispatchEvent(new Event('input', { bubbles: true }));
+test('extension popup points users to the inline Crunchyroll settings', async t => {
+    const html = readFileSync(path.join(root, 'popup.html'), 'utf8');
+    const page = await fixture(t, { html, route: '/popup' });
+
+    assert.equal(await page.locator('.logo').isVisible(), true);
+    assert.match(await page.locator('.info-text').textContent(), /header actions/i);
+    assert.equal(
+        await page.locator('.github-link').getAttribute('href'),
+        'https://github.com/darkplugins/cr-toolkit'
+    );
+    assert.match(await page.locator('.footer').textContent(), /Made with.*DarkPlugins/);
+});
+
+test('inline settings panel is inserted first and stores its accent color', async t => {
+    const page = await fixture(t, {
+        html: '<div class="header-actions"><button id="profile">Profile</button></div>',
+        settings: { active_popup_section: 'removed-section' }
     });
-    assert.equal(await page.evaluate(() => window.storageWrites.length), writes);
-    await page.locator('.color-to').dispatchEvent('change');
-    assert.equal(await page.evaluate(() => window.settings.color_mappings[0].to), '#123456');
+    await page.addScriptTag({ path: path.join(root, 'popup.js') });
+    await page.addScriptTag({ path: path.join(root, 'src/js/features/settingsPanel.js') });
+    await page.evaluate(() => CRToolkit.SettingsPanel.init());
+    await page.waitForFunction(() => Boolean(
+        document.querySelector('.header-actions')?.firstElementChild?.matches('[data-cr-toolkit-control]')
+    ));
+
+    const panelState = await page.evaluate(() => {
+        const control = document.querySelector('[data-cr-toolkit-control]');
+        const button = control.shadowRoot.querySelector('.control-button');
+        button.click();
+        return {
+            isFirst: control.parentElement.firstElementChild === control,
+            hasHeaderActionClass: control.classList.contains('nav-horizontal-layout__action-item--KZBne'),
+            ariaLabel: button.getAttribute('aria-label'),
+            panelOpen: control.shadowRoot.querySelector('.panel').classList.contains('open'),
+            logoCentered: control.shadowRoot.querySelector('.panel-logo')?.getAttribute('alt') === 'CR Toolkit',
+            noDuplicateHeadings: control.shadowRoot.querySelectorAll('.page-heading').length === 0
+        };
+    });
+    assert.deepEqual(panelState, {
+        isFirst: true,
+        hasHeaderActionClass: true,
+        ariaLabel: 'Open CR Toolkit settings',
+        panelOpen: true,
+        logoCentered: true,
+        noDuplicateHeadings: true
+    });
+
+    await page.evaluate(() => {
+        const input = document.querySelector('[data-cr-toolkit-control]').shadowRoot.querySelector('#accent-color');
+        input.value = '#123456';
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    assert.equal(await page.evaluate(() => window.settings.popup_accent_color), '#123456');
+
+    await page.evaluate(() => {
+        document.querySelector('[data-cr-toolkit-control]').shadowRoot.querySelector('#reset-accent-color').click();
+    });
+    assert.equal(await page.evaluate(() => window.settings.popup_accent_color), '#ff6f00');
 });
 
 test('all isolated content scripts initialize together without global collisions', async t => {

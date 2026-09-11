@@ -17,6 +17,7 @@ function initFeatures() {
     window.CRToolkit.HideHeader.init();
     window.CRToolkit.PlayerResize.init();
     window.CRToolkit.ChangeHeader.init();
+    window.CRToolkit.SettingsPanel.init();
 }
 
 function applyFeatures() {

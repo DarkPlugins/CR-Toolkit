@@ -1,8 +1,18 @@
-function updateHeaderChildrenState(children, enabled) {
+const DEFAULT_ACCENT_COLOR = '#ff6f00';
+
+function query(root, selector) {
+    return root === document ? document.querySelector(selector) : root.querySelector(selector);
+}
+
+function queryAll(root, selector) {
+    return root === document ? document.querySelectorAll(selector) : root.querySelectorAll(selector);
+}
+
+function updateHeaderChildrenState(children, enabled, root) {
     children.forEach(cb => {
         cb.disabled = !enabled;
 
-        const label = document.querySelector(`label[for="${cb.id}"]`);
+        const label = query(root, `label[for="${cb.id}"]`);
         if (label) {
             label.style.pointerEvents = enabled ? "auto" : "none";
             label.style.opacity = enabled ? "1" : "0.4";
@@ -10,7 +20,32 @@ function updateHeaderChildrenState(children, enabled) {
     });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+function applyAccentColor(root, value) {
+    const accent = /^#[0-9a-f]{6}$/i.test(value) ? value : DEFAULT_ACCENT_COLOR;
+    const channels = accent.slice(1).match(/.{2}/g).map(channel => Number.parseInt(channel, 16));
+    const rgba = alpha => `rgba(${channels.join(', ')}, ${alpha})`;
+    const documentRoot = root === document
+        ? document.documentElement
+        : root.host?.ownerDocument?.documentElement;
+    documentRoot?.style.setProperty('--cr-toolkit-accent', accent);
+    documentRoot?.style.setProperty('--cr-toolkit-accent-border', rgba(0.8));
+    documentRoot?.style.setProperty('--cr-toolkit-accent-soft', rgba(0.12));
+    documentRoot?.style.setProperty('--cr-toolkit-accent-focus', rgba(0.16));
+    documentRoot?.style.setProperty('--cr-toolkit-accent-glow', rgba(0.2));
+
+    const settings = root.querySelector('.cr-toolkit-settings');
+    settings?.style.setProperty('--primary-accent', accent);
+    settings?.style.setProperty('--accent-strong', accent);
+    settings?.style.setProperty('--accent-soft', rgba(0.14));
+    settings?.style.setProperty('--accent-border', rgba(0.35));
+    settings?.style.setProperty('--accent-checked-border', rgba(0.7));
+    settings?.style.setProperty('--accent-glow', rgba(0.24));
+}
+
+function initPopup(root = document) {
+    if (root.__crToolkitPopupInitialized) return;
+    root.__crToolkitPopupInitialized = true;
+
     const featureDefaults = {
         player_resize: true,
         auto_skip: true,
@@ -29,18 +64,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const featureCheckboxes = Object.entries(featureDefaults).map(([feature, fallback]) => ({
         key: `enabled_${feature}`,
         fallback,
-        checkbox: document.getElementById(`toggle-${feature.replaceAll('_', '-')}`)
+        checkbox: query(root, `#toggle-${feature.replaceAll('_', '-')}`)
     }));
     const headerChildren = featureCheckboxes
         .filter(({ key }) => key.startsWith('enabled_change_header_'))
         .map(({ checkbox }) => checkbox);
-    const headerCheckbox = document.getElementById('toggle-change-header');
-    const btnAddNewColor = document.getElementById('btn-add-color');
-    const btnAddPageColors = document.getElementById('btn-add-page-colors');
-    const colorSort = document.getElementById('color-sort');
+    const headerCheckbox = query(root, '#toggle-change-header');
+    const btnAddNewColor = query(root, '#btn-add-color');
+    const btnAddPageColors = query(root, '#btn-add-page-colors');
+    const colorSort = query(root, '#color-sort');
+    const accentColor = query(root, '#accent-color');
+    const resetAccentColor = query(root, '#reset-accent-color');
 
-    const navButtons = document.querySelectorAll(".nav-btn");
-    const sections = document.querySelectorAll(".section-page");
+    const navButtons = queryAll(root, ".nav-btn");
+    const sections = queryAll(root, ".section-page");
 
     function showSection(sectionId, persist = true) {
         if (!Array.from(sections).some(section => section.id === sectionId)) {
@@ -62,14 +99,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     chrome.storage.sync.get([
         ...featureCheckboxes.map(({ key }) => key),
-        "active_popup_section", "color_mappings", "color_sort_order"
+        "active_popup_section", "color_mappings", "color_sort_order", "popup_accent_color"
     ], data => {
         featureCheckboxes.forEach(({ key, fallback, checkbox }) => {
-            checkbox.checked = data[key] ?? fallback;
+            if (checkbox) checkbox.checked = data[key] ?? fallback;
         });
-        updateHeaderChildrenState(headerChildren, headerCheckbox.checked);
-        colorSort.value = data.color_sort_order === 'color' ? 'color' : 'added';
-        renderColorMappings(data.color_mappings);
+        if (headerCheckbox) updateHeaderChildrenState(headerChildren, headerCheckbox.checked, root);
+        if (colorSort) colorSort.value = data.color_sort_order === 'color' ? 'color' : 'added';
+        if (accentColor) accentColor.value = data.popup_accent_color || DEFAULT_ACCENT_COLOR;
+        applyAccentColor(root, data.popup_accent_color);
+        renderColorMappings(data.color_mappings, root);
         showSection(data.active_popup_section ?? "s-general", false);
     });
 
@@ -81,42 +120,65 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     featureCheckboxes.forEach(({ key, checkbox }) => {
+        if (!checkbox) return;
         checkbox.addEventListener("change", () => {
             chrome.storage.sync.set({ [key]: checkbox.checked });
             if (checkbox === headerCheckbox) {
-                updateHeaderChildrenState(headerChildren, checkbox.checked);
+                updateHeaderChildrenState(headerChildren, checkbox.checked, root);
             }
         });
     });
 
     if (btnAddNewColor) {
-        btnAddNewColor.addEventListener('click', addNewColor);
+        btnAddNewColor.addEventListener('click', () => addNewColor(root));
     }
 
     if (btnAddPageColors) {
-        btnAddPageColors.addEventListener('click', addColorsFromCurrentPage);
+        btnAddPageColors.addEventListener('click', () => addColorsFromCurrentPage(root));
     }
 
     if (colorSort) {
         colorSort.addEventListener('change', () => {
             chrome.storage.sync.set({ color_sort_order: colorSort.value });
-            renderColorMappings(getColorMappings());
+            renderColorMappings(getColorMappings(root), root);
         });
     }
-});
+
+    if (accentColor) {
+        accentColor.addEventListener('input', () => {
+            applyAccentColor(root, accentColor.value);
+        });
+        accentColor.addEventListener('change', () => {
+            const value = /^#[0-9a-f]{6}$/i.test(accentColor.value)
+                ? accentColor.value
+                : DEFAULT_ACCENT_COLOR;
+            chrome.storage.sync.set({ popup_accent_color: value });
+            applyAccentColor(root, value);
+        });
+    }
+
+    if (resetAccentColor && accentColor) {
+        resetAccentColor.addEventListener('click', () => {
+            const defaultAccent = DEFAULT_ACCENT_COLOR;
+            accentColor.value = defaultAccent;
+            chrome.storage.sync.set({ popup_accent_color: defaultAccent });
+            applyAccentColor(root, defaultAccent);
+        });
+    }
+}
+
+window.CRToolkit = window.CRToolkit || {};
+window.CRToolkit.Popup = window.CRToolkit.Popup || { init: initPopup };
+
+if (document.readyState === 'loading') {
+    document.addEventListener("DOMContentLoaded", () => initPopup());
+} else if (document.querySelector('#toggle-player-resize')) {
+    initPopup();
+}
 
 let colorCounter = 0;
 const DEFAULT_FROM_COLOR = '#FF640A';
 const DEFAULT_TO_COLOR = '#b7183e';
-
-function isCrunchyrollUrl(url) {
-    try {
-        const hostname = new URL(url).hostname;
-        return hostname === 'crunchyroll.com' || hostname.endsWith('.crunchyroll.com');
-    } catch (_) {
-        return false;
-    }
-}
 
 function collectColorsFromCurrentPage() {
     const colorTokenPattern = /#[0-9a-f]{3,8}\b|rgba?\([^)]*\)|hsla?\([^)]*\)/gi;
@@ -201,34 +263,24 @@ function collectColorsFromCurrentPage() {
     return [...new Set(Array.from(rawColors).map(normalizeColor).filter(Boolean))].sort();
 }
 
-async function addColorsFromCurrentPage() {
+async function addColorsFromCurrentPage(root = document) {
     const confirmed = window.confirm(
         'Crunchyroll must be open in the active tab. This reads all colors from the currently open Crunchyroll page and adds any colors that are not already listed. Continue?'
     );
     if (!confirmed) return;
 
-    const button = document.getElementById('btn-add-page-colors');
+    const button = query(root, '#btn-add-page-colors');
     if (button) button.disabled = true;
 
     try {
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        if (!tab?.id || !isCrunchyrollUrl(tab.url)) {
-            window.alert('Please open a Crunchyroll page in the active tab first.');
-            return;
-        }
-
-        const results = await chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            func: collectColorsFromCurrentPage
-        });
-        const pageColors = results?.[0]?.result ?? [];
-        const colorList = document.getElementById('list-colors');
+        const pageColors = collectColorsFromCurrentPage();
+        const colorList = query(root, '#list-colors');
         if (!colorList || pageColors.length === 0) {
             window.alert('No colors were found on the current Crunchyroll page.');
             return;
         }
 
-        const currentMappings = getColorMappings();
+        const currentMappings = getColorMappings(root);
         const existingColors = new Set(
             currentMappings
                 .map(mapping => mapping.from?.toLowerCase())
@@ -248,11 +300,11 @@ async function addColorsFromCurrentPage() {
             return;
         }
 
-        renderColorMappings([...currentMappings, ...newMappings]);
-        if (await saveColorMappings()) {
+        renderColorMappings([...currentMappings, ...newMappings], root);
+        if (await saveColorMappings(root)) {
             window.alert(`${newMappings.length} new colors were added.`);
         } else {
-            renderColorMappings(currentMappings);
+            renderColorMappings(currentMappings, root);
         }
     } catch (error) {
         console.error('CR-Toolkit: Could not collect Crunchyroll colors', error);
@@ -262,11 +314,11 @@ async function addColorsFromCurrentPage() {
     }
 }
 
-async function saveColorMappings() {
-    const colorList = document.getElementById("list-colors");
+async function saveColorMappings(root = document) {
+    const colorList = query(root, '#list-colors');
     if (!colorList) return;
 
-    const mappings = getColorMappings();
+    const mappings = getColorMappings(root);
 
     try {
         await chrome.storage.sync.set({ color_mappings: mappings });
@@ -278,8 +330,8 @@ async function saveColorMappings() {
     }
 }
 
-function getColorMappings() {
-    const colorList = document.getElementById("list-colors");
+function getColorMappings(root = document) {
+    const colorList = query(root, '#list-colors');
     if (!colorList) return [];
 
     return Array.from(colorList.querySelectorAll('.color-row'))
@@ -341,9 +393,9 @@ function getColorSortKey(color) {
     return [hue * 60, saturation, lightness];
 }
 
-function sortColorMappings(mappings) {
+function sortColorMappings(mappings, root = document) {
     const normalized = normalizeStoredMappings(mappings);
-    const sortMode = document.getElementById('color-sort')?.value ?? 'added';
+    const sortMode = query(root, '#color-sort')?.value ?? 'added';
 
     return normalized
         .map((mapping, index) => ({ mapping, index, colorKey: sortMode === 'color' ? getColorSortKey(mapping.from) : null }))
@@ -367,8 +419,8 @@ function sortColorMappings(mappings) {
         .map(entry => entry.mapping);
 }
 
-function renderColorMappings(mappings) {
-    const colorList = document.getElementById("list-colors");
+function renderColorMappings(mappings, root = document) {
+    const colorList = query(root, '#list-colors');
     if (!colorList) return;
 
     colorList.replaceChildren();
@@ -382,11 +434,11 @@ function renderColorMappings(mappings) {
         return;
     }
 
-    sortColorMappings(mappings).forEach(mapping => addColorRow(mapping));
+    sortColorMappings(mappings, root).forEach(mapping => addColorRow(mapping, root));
 }
 
-function addColorRow(mapping = {}) {
-    const colorList = document.getElementById("list-colors");
+function addColorRow(mapping = {}, root = document) {
+    const colorList = query(root, '#list-colors');
     if (!colorList) return;
 
     colorList.querySelector('.small')?.remove();
@@ -425,32 +477,32 @@ function addColorRow(mapping = {}) {
         row.remove();
 
         if (!colorList.querySelector('.color-row')) {
-            renderColorMappings([]);
+            renderColorMappings([], root);
         }
 
-        saveColorMappings();
+        saveColorMappings(root);
     });
 
-    to.addEventListener('change', saveColorMappings);
+    to.addEventListener('change', () => saveColorMappings(root));
     from.addEventListener('change', () => {
-        if (document.getElementById('color-sort')?.value === 'color') {
-            const mappings = getColorMappings();
-            renderColorMappings(mappings);
+        if (query(root, '#color-sort')?.value === 'color') {
+            const mappings = getColorMappings(root);
+            renderColorMappings(mappings, root);
         }
-        saveColorMappings();
+        saveColorMappings(root);
     });
 
     row.append(from, sep, to, removeBtn);
     colorList.appendChild(row);
 }
 
-function addNewColor() {
-    const mappings = getColorMappings();
+function addNewColor(root = document) {
+    const mappings = getColorMappings(root);
     mappings.push({
         from: DEFAULT_FROM_COLOR,
         to: DEFAULT_TO_COLOR,
         addedAt: getNextAddedAt(mappings)
     });
-    renderColorMappings(mappings);
-    saveColorMappings();
+    renderColorMappings(mappings, root);
+    saveColorMappings(root);
 }

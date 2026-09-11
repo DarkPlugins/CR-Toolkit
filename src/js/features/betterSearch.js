@@ -353,6 +353,14 @@
         const style = document.createElement("style");
         style.id = "cr-better-search-styles";
         style.textContent = `
+            :root {
+                --cr-toolkit-accent: #ff6f00;
+                --cr-toolkit-accent-border: rgba(255, 111, 0, 0.8);
+                --cr-toolkit-accent-soft: rgba(255, 111, 0, 0.12);
+                --cr-toolkit-accent-focus: rgba(255, 111, 0, 0.16);
+                --cr-toolkit-accent-glow: rgba(255, 111, 0, 0.2);
+            }
+
             #cr-better-search,
             #cr-better-search *,
             #cr-better-search-toggle,
@@ -430,7 +438,7 @@
             #cr-better-search-toggle:hover,
             #cr-better-search-toggle:focus-visible {
                 background: #ffffff;
-                border-color: rgba(255, 102, 0, 0.8);
+                border-color: var(--cr-toolkit-accent-border);
                 transform: scale(1.04);
                 outline: none;
             }
@@ -483,14 +491,14 @@
 
             .cr-better-search-header h2 {
                 margin: 0;
-                color: #f47521;
+                color: var(--cr-toolkit-accent);
                 font-size: 19px;
                 font-weight: 700;
                 line-height: 1.2;
             }
 
             html.cr-better-search-wide .cr-better-search-header h2 {
-                color: #f47521;
+                color: var(--cr-toolkit-accent);
             }
 
             .cr-better-search-close {
@@ -601,8 +609,8 @@
 
             .cr-better-search-language-input:focus {
                 background: #222222;
-                border-color: rgba(255, 111, 0, 0.9);
-                box-shadow: 0 0 0 3px rgba(255, 111, 0, 0.16);
+                border-color: var(--cr-toolkit-accent-border);
+                box-shadow: 0 0 0 3px var(--cr-toolkit-accent-focus);
             }
 
             html.cr-better-search-wide .cr-better-search-language-input:focus {
@@ -669,7 +677,7 @@
             .cr-better-search-language-option:hover,
             .cr-better-search-language-option[aria-selected="true"] {
                 color: #ffffff;
-                background: rgba(244, 117, 33, 0.12);
+                background: var(--cr-toolkit-accent-soft);
             }
 
             .cr-better-search-checkbox {
@@ -726,8 +734,8 @@
             }
 
             .cr-better-search-checkbox input:checked + .cr-better-search-checkbox-visual {
-                background: #ff6f00;
-                border-color: #ff8533;
+                background: var(--cr-toolkit-accent);
+                border-color: var(--cr-toolkit-accent);
             }
 
             .cr-better-search-checkbox input:checked + .cr-better-search-checkbox-visual::after {
@@ -735,7 +743,7 @@
             }
 
             .cr-better-search-checkbox input:focus-visible + .cr-better-search-checkbox-visual {
-                box-shadow: 0 0 0 3px rgba(255, 111, 0, 0.2);
+                box-shadow: 0 0 0 3px var(--cr-toolkit-accent-glow);
             }
 
             @media (prefers-reduced-motion: reduce) {

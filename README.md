@@ -20,6 +20,12 @@ Control whether the Crunchyroll header is displayed during video playback for a 
 
 Modify the appearance of the Crunchyroll header to better match your preferences.
 
+### Better Search
+
+Filter Crunchyroll search results by available audio and subtitle languages. Better
+Search includes its own settings panel with language selectors and matching-result
+checkboxes.
+
 ## Installation
 
 ### Manual Installation
@@ -27,7 +33,7 @@ Modify the appearance of the Crunchyroll header to better match your preferences
 1. Download the latest release files from the project's Releases page.
 2. Install the extension using your preferred browser extension platform.  Drag & Drop the .crx file into the extension page or extract the .zip file, enable developer-mode and "load unpacked files".
 3. Refresh any open Crunchyroll tabs.
-4. Open Crunchyroll and configure the toolkit settings to your liking using the pop-up.
+4. Open Crunchyroll and use the white gear in the header actions to open the inline settings panel.
 
 ## Compatibility
 
@@ -36,8 +42,9 @@ Modify the appearance of the Crunchyroll header to better match your preferences
 
 ## Usage
 
-After installation, simply open Crunchyroll. The extension will automatically apply your configured enhancements and provide additional controls where applicable.
-You can adjust the settings in the pop-up. Simply click the extension icon, and the pop-up will open.
+After installation, simply open Crunchyroll. The extension will automatically apply your configured enhancements and add a white gear to the first position in the header actions.
+Click the gear to open the glass-style settings panel directly on the Crunchyroll page. The panel contains General, Appearance, and Options sections. The Accent color option is shared with Better Search, including its settings, selectors, focus states, and checkboxes. The default and reset color is `#ff6f00`.
+The extension icon opens a small info card with a link to the project repository.
 
 ## Development and tests
 

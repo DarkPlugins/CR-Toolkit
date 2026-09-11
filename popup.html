@@ -2,410 +2,131 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>CR Toolkit settings</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CR Toolkit</title>
 <style>
 :root {
-    --primary-accent: #FF640A;
-    --secondary-accent: #b7183e;
+    color-scheme: dark;
+    --accent: #ff6f00;
+    --accent-soft: rgba(255, 111, 0, 0.14);
+    --background: #272727;
+    --border: rgba(255, 255, 255, 0.11);
+    --text: #f2f1ed;
+    --muted: #a7abb3;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    width: 360px;
+    height: 300px;
+    margin: 0;
+}
+
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
 }
 
 body {
     display: flex;
-    width: 400px;
-    height: 500px;
-    padding: 10px;
-    font-family: sans-serif;
-    background-color: #282828;
-    color: var(--primary-accent);
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    overflow: hidden;
+    background: var(--background);
+    color: var(--text);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-.content {
+.info-card {
+    position: relative;
     display: flex;
-    flex-direction: column;
     width: 100%;
+    height: 100%;
+    min-height: 0;
+    align-items: center;
+    flex-direction: column;
+    justify-content: center;
     gap: 10px;
-}
-
-.content h1 {
+    padding: 16px;
     text-align: center;
-    font-size: 35px;
-    margin-bottom: 0;
 }
 
-.content span {
-    text-align: left;
-    font-size: 20px;
+.logo {
+    display: block;
+    width: 176px;
+    height: auto;
+    margin-bottom: 3px;
 }
 
-#footer {
+.info-text {
+    max-width: 270px;
+    margin: 0;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.55;
+}
+
+.github-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 11px;
+    border: 1px solid rgba(255, 111, 0, 0.26);
+    border-radius: 10px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 10px;
+    font-weight: 650;
+    text-decoration: none;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.github-link:hover {
+    border-color: rgba(239, 138, 93, 0.46);
+    background: rgba(239, 138, 93, 0.2);
+    color: #ffad79;
+}
+
+.github-link:active {
+    transform: scale(0.98);
+}
+
+.footer {
+    position: static;
+    margin-top: 6px;
+    color: #a7abb3;
+    font-size: 10px;
     text-align: center;
-    font-size: 15px;
 }
 
-.content a {
-    color: var(--primary-accent);
+.footer a {
+    color: #ff6f00;
     text-decoration: none;
 }
 
-.content a:hover {
-    color: var(--secondary-accent);
-}
-
-.navbar {
-    display: flex;
-    gap: 1rem;
-}
-
-.nav-btn {
-    flex: 1;
-    padding: 8px;
-    background: transparent;
-    border: 1px solid var(--primary-accent);
-    border-radius: 10px;
-    color: var(--primary-accent);
-    cursor: pointer;
-}
-
-.nav-btn.active {
-    background: var(--primary-accent);
-    color: #282828;
-    font-weight: bold;
-}
-
-.section-container {
-    width: 100%;
-    border: 1px solid var(--primary-accent);
-    border-radius: 10px;
-    height: 380px;
-    overflow: hidden;
-}
-
-.section-page {
-    display: none;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-}
-
-.section-page.active {
-    display: block;
-}
-
-.feat-item {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    padding: 10px;
-    width: auto;
-    align-items: center;
-}
-
-.feat-head-multi {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-}
-
-.color-actions {
-    display: flex;
-    gap: 6px;
-}
-
-.color-actions #btn-add-page-colors {
-    width: 42px;
-    border-radius: 6px;
-}
-
-.color-actions #btn-add-page-colors svg {
-    width: 18px;
-    height: 18px;
-    display: block;
-    margin: auto;
-}
-
-.color-sort {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    margin-top: 8px;
-    font-size: 14px;
-}
-
-#color-sort {
-    padding: 4px 8px;
-    border: 1px solid var(--primary-accent);
-    border-radius: 5px;
-    background: #282828;
-    color: var(--primary-accent);
-}
-
-.feat-item button {
-    width: 30px;
-    height: 30px;
-    border-radius: 100%;
-    border: 1px solid var(--secondary-accent);
-    background-color: var(--primary-accent);
-    color: black;
-}
-
-.feat-item button:hover {
-    transition: background-color 0.2s, border-color 0.2s;
-    cursor: pointer;
-    border: 1px solid var(--primary-accent);
-    background-color: var(--secondary-accent);
-}
-
-.list {
-    width: 300px;
-    max-height: 210px;
-    margin: 10px;
-    padding: 10px;
-    border: 1px solid var(--primary-accent);
-    text-align: center;
-    overflow: auto;
-}
-
-.list .small {
-    font-size: 15px;
-}
-
-.color-row {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-around;
-    align-items: center;
-    margin: 10px;
-    border: none;
-    border-radius: 0;
-    padding: 0;
-}
-
-input[type="color"] {
-    width: 60px;
-    height: 30px;
-    border-radius: 5px;
-    padding: 0;
-    border: 1px solid var(--primary-accent);
-    background-color: transparent;
-}
-
-input[type="color"]::-moz-color-swatch {
-  border: none;
-}
-
-input[type="color"]::-webkit-color-swatch-wrapper {
-  padding: 0;
-  border-radius: 0;
-}
-
-input[type="color"]::-webkit-color-swatch {
-  border: none;
-}
-
-.child {
-    margin-left: 1rem;
-}
-
-input[type="checkbox"] {
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
-}
-
-.toggle-label {
-    position: relative;
-    display: inline-block;
-    width: 50px;
-    height: 28px;
-    cursor: pointer;
-}
-
-.toggle-label::before {
-    content: "";
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background: #444;
-    border-radius: 20px;
-    transition: background 0.3s;
-}
-
-.toggle-label::after {
-    content: "";
-    position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 22px;
-    height: 22px;
-    background: #f0f0f0;
-    border-radius: 50%;
-    transition: transform 0.3s;
-}
-
-input[type="checkbox"]:checked + .toggle-label::before {
-    background: #4caf50;
-}
-
-input[type="checkbox"]:checked + .toggle-label::after {
-    transform: translateX(22px);
-}
-
-input[type="checkbox"]:focus-visible + .toggle-label {
-    outline: 2px solid var(--primary-accent);
-    outline-offset: 3px;
-}
-
-.toggle-text {
-    font-size: 16px;
-    user-select: none;
-    font-weight: bold;
+.footer a:hover {
+    color: #ffad79;
 }
 </style>
 </head>
-
 <body>
-    <div class="content">
-        <h1>CR Toolkit</h1>
-
-        <div class="navbar">
-            <button class="nav-btn" data-section="s-general">
-                General
-            </button>
-
-            <button class="nav-btn" data-section="s-appearance">
-                Appearance
-            </button>
-
-            <button class="nav-btn" data-section="s-options">
-                Options
-            </button>
-        </div>
-
-        <div class="section-container">
-            <div class="section-page" id="s-general">
-                <div class="feat-item">
-                    <span class="toggle-text" id="toggle-player-resize-text">Player Resize</span>
-                    <input type="checkbox" id="toggle-player-resize" aria-labelledby="toggle-player-resize-text">
-                    <label for="toggle-player-resize" class="toggle-label"></label>
-                </div>
-
-                <div class="feat-item">
-                    <span class="toggle-text" id="toggle-auto-skip-text">Auto Skip OP/ED</span>
-                    <input type="checkbox" id="toggle-auto-skip" aria-labelledby="toggle-auto-skip-text">
-                    <label for="toggle-auto-skip" class="toggle-label"></label>
-                </div>
-
-                <div class="feat-item">
-                    <span class="toggle-text" id="toggle-better-search-text">Better Search</span>
-                    <input type="checkbox" id="toggle-better-search" aria-labelledby="toggle-better-search-text">
-                    <label for="toggle-better-search" class="toggle-label"></label>
-                </div>
-            </div>
-
-            <div class="section-page" id="s-appearance">
-                <div class="feat-item" style="flex-direction: column;">
-                    <div class="feat-head-multi">
-                        <span class="toggle-text">Colors</span>
-                        <div class="color-actions">
-                            <button id="btn-add-page-colors" type="button"
-                                title="Add all colors from the current Crunchyroll page"
-                                aria-label="Add all colors from the current Crunchyroll page">
-                                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                                    <path d="M12 3v12m0 0 5-5m-5 5-5-5M5 21h14"
-                                        fill="none" stroke="currentColor" stroke-width="2"
-                                        stroke-linecap="round" stroke-linejoin="round" />
-                                </svg>
-                            </button>
-                            <button id="btn-add-color" type="button" title="Add a color">+</button>
-                        </div>
-                    </div>
-                    <div class="color-sort">
-                        <label for="color-sort">Sort by</label>
-                        <select id="color-sort">
-                            <option value="added">Added</option>
-                            <option value="color">Color</option>
-                        </select>
-                    </div>
-                    <div class="list" id="list-colors">
-                        <span class="small">Add the colors you want to change</span>
-                    </div>
-                </div>
-
-                <div class="feat-item">
-                    <span class="toggle-text" id="toggle-hide-header-text">Hide Header on Playback</span>
-                    <input type="checkbox" id="toggle-hide-header" aria-labelledby="toggle-hide-header-text">
-                    <label for="toggle-hide-header" class="toggle-label"></label>
-                </div>
-
-                <div class="feat-item">
-                    <span class="toggle-text" id="toggle-change-header-text">Change Header</span>
-                    <input type="checkbox" id="toggle-change-header" aria-labelledby="toggle-change-header-text">
-                    <label for="toggle-change-header" class="toggle-label"></label>
-                </div>
-
-                <div class="feat-item child">
-                    <span class="toggle-text" id="toggle-change-header-logo-text">Remove: Logo</span>
-                    <input type="checkbox" id="toggle-change-header-logo" aria-labelledby="toggle-change-header-logo-text">
-                    <label for="toggle-change-header-logo" class="toggle-label"></label>
-                </div>
-
-                <div class="feat-item child">
-                    <span class="toggle-text" id="toggle-change-header-new-text">Remove: New</span>
-                    <input type="checkbox" id="toggle-change-header-new" aria-labelledby="toggle-change-header-new-text">
-                    <label for="toggle-change-header-new" class="toggle-label"></label>
-                </div>
-
-                <div class="feat-item child">
-                    <span class="toggle-text" id="toggle-change-header-popular-text">Remove: Popular</span>
-                    <input type="checkbox" id="toggle-change-header-popular" aria-labelledby="toggle-change-header-popular-text">
-                    <label for="toggle-change-header-popular" class="toggle-label"></label>
-                </div>
-
-                <div class="feat-item child">
-                    <span class="toggle-text" id="toggle-change-header-simulcast-text">Remove: Simulcast</span>
-                    <input type="checkbox" id="toggle-change-header-simulcast" aria-labelledby="toggle-change-header-simulcast-text">
-                    <label for="toggle-change-header-simulcast" class="toggle-label"></label>
-                </div>
-
-                <div class="feat-item child">
-                    <span class="toggle-text" id="toggle-change-header-categories-text">Remove: Categories</span>
-                    <input type="checkbox" id="toggle-change-header-categories" aria-labelledby="toggle-change-header-categories-text">
-                    <label for="toggle-change-header-categories" class="toggle-label"></label>
-                </div>
-
-                <div class="feat-item child">
-                    <span class="toggle-text" id="toggle-change-header-games-text">Remove: Games</span>
-                    <input type="checkbox" id="toggle-change-header-games" aria-labelledby="toggle-change-header-games-text">
-                    <label for="toggle-change-header-games" class="toggle-label"></label>
-                </div>
-
-                <div class="feat-item child">
-                    <span class="toggle-text" id="toggle-change-header-store-text">Remove: Store</span>
-                    <input type="checkbox" id="toggle-change-header-store" aria-labelledby="toggle-change-header-store-text">
-                    <label for="toggle-change-header-store" class="toggle-label"></label>
-                </div>
-
-                <div class="feat-item child">
-                    <span class="toggle-text" id="toggle-change-header-news-text">Remove: News</span>
-                    <input type="checkbox" id="toggle-change-header-news" aria-labelledby="toggle-change-header-news-text">
-                    <label for="toggle-change-header-news" class="toggle-label"></label>
-                </div>
-            </div>
-
-            <div class="section-page" id="s-options">
-
-            </div>
-        </div>
-
-        <span id="footer">
+    <main class="info-card">
+        <img class="logo" src="icon.png" alt="CR Toolkit">
+        <p class="info-text">
+            Open the gear in Crunchyroll's header actions to access all settings directly on the page.
+        </p>
+        <a class="github-link" href="https://github.com/darkplugins/cr-toolkit" target="_blank" rel="noopener noreferrer">
+            View project on GitHub ↗
+        </a>
+        <footer class="footer">
             Made with ❤️ by
             <a href="https://darkplugins.de" target="_blank" rel="noopener noreferrer">DarkPlugins</a>
-        </span>
-    </div>
-
-<script src="popup.js"></script>
+        </footer>
+    </main>
 </body>
 </html>

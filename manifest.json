@@ -8,7 +8,7 @@
     "48": "icon.png",
     "128": "icon.png"
   },
-  "permissions": ["storage", "scripting", "activeTab"],
+  "permissions": ["storage"],
   "host_permissions": ["*://www.crunchyroll.com/*"],
   "action": {
     "default_popup": "popup.html",
@@ -33,9 +33,17 @@
         "src/js/features/changeColors.js",
         "src/js/features/hideHeader.js",
         "src/js/features/changeHeader.js",
+        "popup.js",
+        "src/js/features/settingsPanel.js",
         "src/js/content.js"
       ],
       "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["icon.png"],
+      "matches": ["*://www.crunchyroll.com/*"]
     }
   ]
 }

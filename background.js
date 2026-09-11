@@ -9,7 +9,8 @@ chrome.runtime.onInstalled.addListener(() => {
             "active_popup_section",
             "enabled_player_resize",
             "enabled_auto_skip",
-            "enabled_hide_header"
+            "enabled_hide_header",
+            "popup_accent_color"
         ],
         (data) => {
             const updates = {};
@@ -28,6 +29,10 @@ chrome.runtime.onInstalled.addListener(() => {
 
             if (data.active_popup_section === undefined) {
                 updates.active_popup_section = "s-general";
+            }
+
+            if (data.popup_accent_color === undefined) {
+                updates.popup_accent_color = "#ff6f00";
             }
 
             if (Object.keys(updates).length > 0) {
