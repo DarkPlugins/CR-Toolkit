@@ -1,6 +1,7 @@
 (() => {
 const COLOR_STORAGE_KEY = "color_mappings";
-const COLOR_TOKEN_PATTERN = /#[0-9a-f]{3,8}\b|rgba?\([^)]*\)|hsla?\([^)]*\)/gi;
+// Skip URLs and quoted strings, including SVG fragment identifiers.
+const COLOR_TOKEN_PATTERN = /url\((?:[^)"']|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')*\)|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|#[0-9a-f]{3,8}\b|rgba?\([^)]*\)|hsla?\([^)]*\)/gi;
 const PRESENTATION_ATTRIBUTES = [
     "fill",
     "stroke",
@@ -9,12 +10,16 @@ const PRESENTATION_ATTRIBUTES = [
     "flood-color",
     "lighting-color"
 ];
+const ELEMENT_SELECTOR = `[style],${PRESENTATION_ATTRIBUTES.map(attribute => `[${attribute}]`).join(",")}`;
+const replacementCache = new Map();
 
 let initialized = false;
 let colorMappings = [];
 let mutationObserver = null;
 let stylesheetTimer = null;
+let stylesheetCheckInterval = null;
 let applying = false;
+const stylesheetRuleCounts = new Map();
 
 // Keep the original declarations so changing/removing a mapping can restore them.
 const stylesheetOverrides = new Map();
@@ -35,6 +40,7 @@ function parseNumber(value, percentageScale = 1) {
 }
 
 function parseColorToken(value) {
+    if (typeof value !== "string") return null;
     const token = value.trim().toLowerCase();
 
     if (token.startsWith("#")) {
@@ -68,23 +74,22 @@ function parseColorToken(value) {
             .split(/\s+/)
             .filter(part => part && part !== "/");
 
-    if (parts.length < 3) return null;
+    if (parts.length < 3 || parts.length > 4) return null;
+    const rawAlpha = parts[3] === undefined ? 1 : parseNumber(parts[3]);
+    if (rawAlpha === null) return null;
+    const alpha = clamp(rawAlpha, 0, 1);
 
     if (type.startsWith("rgb")) {
         const rawChannels = parts.slice(0, 3).map(part => parseNumber(part, 255));
         if (rawChannels.some(channel => channel === null)) return null;
-        const channels = rawChannels.map(channel => clamp(channel, 0, 255));
+        const channels = rawChannels.map(channel => Math.round(clamp(channel, 0, 255)));
 
-        const alpha = parts[3] === undefined
-            ? 1
-            : clamp(parseNumber(parts[3]), 0, 1);
-
-        return alpha === null
-            ? null
-            : { r: channels[0], g: channels[1], b: channels[2], a: alpha };
+        return { r: channels[0], g: channels[1], b: channels[2], a: alpha };
     }
 
-    const hue = Number.parseFloat(parts[0]);
+    const hueMatch = parts[0].match(/^([+-]?(?:\d*\.)?\d+)(deg|grad|rad|turn)?$/);
+    if (!hueMatch) return null;
+    const hue = Number(hueMatch[1]) * ({ deg: 1, grad: 0.9, rad: 180 / Math.PI, turn: 360 }[hueMatch[2] || "deg"]);
     const saturation = parseNumber(parts[1]);
     const lightness = parseNumber(parts[2]);
     if (!Number.isFinite(hue) || saturation === null || lightness === null) {
@@ -108,18 +113,12 @@ function parseColorToken(value) {
                         ? [x, 0, chroma]
                         : [chroma, 0, x];
     const offset = l - chroma / 2;
-    const alpha = parts[3] === undefined
-        ? 1
-        : clamp(parseNumber(parts[3]), 0, 1);
-
-    return alpha === null
-        ? null
-        : {
-            r: Math.round((match[0] + offset) * 255),
-            g: Math.round((match[1] + offset) * 255),
-            b: Math.round((match[2] + offset) * 255),
-            a: alpha
-        };
+    return {
+        r: Math.round((match[0] + offset) * 255),
+        g: Math.round((match[1] + offset) * 255),
+        b: Math.round((match[2] + offset) * 255),
+        a: alpha
+    };
 }
 
 function colorToHex(color) {
@@ -164,8 +163,9 @@ function formatReplacement(mapping, sourceColor) {
 
 function replaceColorTokens(value) {
     if (!value || !colorMappings.length) return value;
+    if (replacementCache.has(value)) return replacementCache.get(value);
 
-    return value.replace(COLOR_TOKEN_PATTERN, token => {
+    const result = value.replace(COLOR_TOKEN_PATTERN, token => {
         const sourceColor = parseColorToken(token);
         if (!sourceColor) return token;
 
@@ -173,38 +173,36 @@ function replaceColorTokens(value) {
             colorsMatch(sourceColor, candidate.fromColor)
         );
 
-        return mapping ? formatReplacement(mapping, sourceColor) : token;
+        if (!mapping || (mapping.from === mapping.to)) return token;
+        return formatReplacement(mapping, sourceColor);
     });
+    if (replacementCache.size >= 1000) replacementCache.clear();
+    replacementCache.set(value, result);
+    return result;
+}
+
+function restoreProperties(style, properties) {
+    for (const [property, original] of properties) {
+        try {
+            if (
+                style.getPropertyValue(property) === original.appliedValue &&
+                style.getPropertyPriority(property) === original.priority
+            ) {
+                style.setProperty(property, original.value, original.priority);
+            }
+        } catch (_) {
+            // Stylesheets can disappear while Crunchyroll changes views.
+        }
+    }
 }
 
 function restoreStylesheetOverrides() {
-    for (const [style, properties] of stylesheetOverrides) {
-        for (const [property, original] of properties) {
-            try {
-                if (
-                    style.getPropertyValue(property) === original.appliedValue &&
-                    style.getPropertyPriority(property) === original.priority
-                ) {
-                    style.setProperty(property, original.value, original.priority);
-                }
-            } catch (_) {
-                // Stylesheets can disappear while Crunchyroll changes views.
-            }
-        }
-    }
+    for (const [style, properties] of stylesheetOverrides) restoreProperties(style, properties);
     stylesheetOverrides.clear();
 }
 
 function restoreInlineStyleOverrides() {
-    for (const [element, original] of inlineStyleOverrides) {
-        try {
-            if (element.getAttribute("style") !== original.appliedValue) continue;
-            if (original.value) element.setAttribute("style", original.value);
-            else element.removeAttribute("style");
-        } catch (_) {
-            // The element may have been removed during a route change.
-        }
-    }
+    for (const [element, properties] of inlineStyleOverrides) restoreProperties(element.style, properties);
     inlineStyleOverrides.clear();
 }
 
@@ -223,11 +221,11 @@ function restoreAttributeOverrides() {
     attributeOverrides.clear();
 }
 
-function processStyleDeclaration(style) {
-    let properties = stylesheetOverrides.get(style);
+function processStyleDeclaration(style, overrides = stylesheetOverrides, key = style) {
+    let properties = overrides.get(key);
 
-    for (let index = 0; index < style.length; index += 1) {
-        const property = style.item(index);
+    // Setting a shorthand can change the live declaration's property list.
+    for (const property of Array.from(style)) {
         const value = style.getPropertyValue(property);
         const priority = style.getPropertyPriority(property);
         const previous = properties?.get(property);
@@ -244,28 +242,30 @@ function processStyleDeclaration(style) {
 
         if (!properties) {
             properties = new Map();
-            stylesheetOverrides.set(style, properties);
+            overrides.set(key, properties);
         }
-
-        properties.set(property, {
-            value,
-            priority,
-            appliedValue: replacement
-        });
 
         try {
             style.setProperty(property, replacement, priority);
+            properties.set(property, {
+                value,
+                priority,
+                appliedValue: style.getPropertyValue(property)
+            });
         } catch (_) {
             properties.delete(property);
         }
     }
 }
 
-function processRules(rules) {
+function processRules(rules, liveStyles) {
     for (const rule of Array.from(rules || [])) {
         try {
-            if (rule.style) processStyleDeclaration(rule.style);
-            if (rule.cssRules) processRules(rule.cssRules);
+            if (rule.style) {
+                liveStyles.add(rule.style);
+                processStyleDeclaration(rule.style);
+            }
+            if (rule.cssRules) processRules(rule.cssRules, liveStyles);
         } catch (_) {
             // A single inaccessible nested rule must not stop other rules.
         }
@@ -274,10 +274,33 @@ function processRules(rules) {
 
 function processStylesheets() {
     if (!colorMappings.length) return;
+    const liveStyles = new Set();
+    stylesheetRuleCounts.clear();
 
     for (const stylesheet of Array.from(document.styleSheets)) {
         try {
-            processRules(stylesheet.cssRules);
+            const rules = stylesheet.cssRules;
+            stylesheetRuleCounts.set(stylesheet, rules.length);
+            processRules(rules, liveStyles);
+        } catch (_) {
+            // Cross-origin stylesheets cannot be inspected by the browser.
+        }
+    }
+    for (const [style, properties] of stylesheetOverrides) {
+        if (liveStyles.has(style)) continue;
+        restoreProperties(style, properties);
+        stylesheetOverrides.delete(style);
+    }
+}
+
+function checkStylesheetRules() {
+    // CSS-in-JS can insert rules without producing any DOM mutation.
+    for (const stylesheet of document.styleSheets) {
+        try {
+            if (stylesheetRuleCounts.get(stylesheet) !== stylesheet.cssRules.length) {
+                scheduleStylesheetProcessing();
+                return;
+            }
         } catch (_) {
             // Cross-origin stylesheets cannot be inspected by the browser.
         }
@@ -285,19 +308,11 @@ function processStylesheets() {
 }
 
 function processInlineStyle(element) {
-    if (!element.hasAttribute("style")) return;
-
-    const value = element.getAttribute("style") || "";
-    const previous = inlineStyleOverrides.get(element);
-
-    if (previous && value === previous.appliedValue) return;
-    if (previous) inlineStyleOverrides.delete(element);
-
-    const replacement = replaceColorTokens(value);
-    if (replacement === value) return;
-
-    inlineStyleOverrides.set(element, { value, appliedValue: replacement });
-    element.setAttribute("style", replacement);
+    if (!element.hasAttribute("style")) {
+        inlineStyleOverrides.delete(element);
+        return;
+    }
+    processStyleDeclaration(element.style, inlineStyleOverrides, element);
 }
 
 function processPresentationAttribute(element, attribute) {
@@ -333,9 +348,7 @@ function processElement(element) {
 
 function processDocumentElements() {
     processElement(document.documentElement);
-    for (const element of document.querySelectorAll(
-        `[style],${PRESENTATION_ATTRIBUTES.map(attribute => `[${attribute}]`).join(",")}`
-    )) {
+    for (const element of document.querySelectorAll(ELEMENT_SELECTOR)) {
         processElement(element);
     }
 }
@@ -344,9 +357,7 @@ function processAddedNode(node) {
     if (!(node instanceof Element)) return;
 
     processElement(node);
-    for (const element of node.querySelectorAll(
-        `[style],${PRESENTATION_ATTRIBUTES.map(attribute => `[${attribute}]`).join(",")}`
-    )) {
+    for (const element of node.querySelectorAll(ELEMENT_SELECTOR)) {
         processElement(element);
     }
 }
@@ -367,19 +378,30 @@ function observeChanges() {
         if (applying || !colorMappings.length) return;
 
         let stylesheetChanged = false;
+        let nodesRemoved = false;
 
         for (const mutation of mutations) {
             if (mutation.type === "childList") {
-                stylesheetChanged = stylesheetChanged || mutation.addedNodes.length > 0;
+                stylesheetChanged ||= mutation.target.nodeName === "STYLE" ||
+                    [...mutation.addedNodes, ...mutation.removedNodes].some(node =>
+                        node instanceof Element && (node.matches('style, link[rel~="stylesheet"]') ||
+                            node.querySelector('style, link[rel~="stylesheet"]'))
+                    );
+                nodesRemoved ||= mutation.removedNodes.length > 0;
                 mutation.addedNodes.forEach(processAddedNode);
+            } else if (mutation.type === "characterData") {
+                stylesheetChanged ||= mutation.target.parentElement?.nodeName === "STYLE";
             } else if (mutation.type === "attributes") {
-                if (mutation.attributeName === "style") {
+                if (mutation.attributeName === "href" || mutation.attributeName === "rel") {
+                    stylesheetChanged ||= mutation.target.nodeName === "LINK";
+                } else if (mutation.attributeName === "style") {
                     processInlineStyle(mutation.target);
                 } else {
                     processPresentationAttribute(mutation.target, mutation.attributeName);
                 }
             }
         }
+        if (nodesRemoved) releaseDetachedElements();
 
         if (stylesheetChanged) scheduleStylesheetProcessing();
     });
@@ -387,31 +409,65 @@ function observeChanges() {
     mutationObserver.observe(document.documentElement, {
         childList: true,
         subtree: true,
+        characterData: true,
         attributes: true,
-        attributeFilter: ["style", ...PRESENTATION_ATTRIBUTES]
+        attributeFilter: ["style", "href", "rel", ...PRESENTATION_ATTRIBUTES]
     });
+}
+
+function releaseDetachedElements() {
+    for (const [element, properties] of inlineStyleOverrides) {
+        if (element.isConnected) continue;
+        restoreProperties(element.style, properties);
+        inlineStyleOverrides.delete(element);
+    }
+    for (const [element, attributes] of attributeOverrides) {
+        if (element.isConnected) continue;
+        for (const [attribute, original] of attributes) {
+            if (element.getAttribute(attribute) === original.appliedValue) {
+                element.setAttribute(attribute, original.original);
+            }
+        }
+        attributeOverrides.delete(element);
+    }
 }
 
 function applyColorMappings(value) {
     applying = true;
+    mutationObserver?.disconnect();
+    mutationObserver = null;
+    clearTimeout(stylesheetTimer);
+    stylesheetTimer = null;
+    clearInterval(stylesheetCheckInterval);
+    stylesheetCheckInterval = null;
+    stylesheetRuleCounts.clear();
     restoreStylesheetOverrides();
     restoreInlineStyleOverrides();
     restoreAttributeOverrides();
 
     colorMappings = normalizeMappings(value);
+    replacementCache.clear();
     if (colorMappings.length) {
         processStylesheets();
         processDocumentElements();
     }
 
     applying = false;
+    if (colorMappings.length) {
+        observeChanges();
+        stylesheetCheckInterval = setInterval(checkStylesheetRules, 2000);
+    }
 }
 
 function initChangeColors() {
     if (initialized) return;
     initialized = true;
 
-    observeChanges();
+    document.addEventListener("load", event => {
+        if (colorMappings.length && event.target.matches?.('link[rel~="stylesheet"]')) {
+            scheduleStylesheetProcessing();
+        }
+    }, true);
     chrome.storage.sync.get([COLOR_STORAGE_KEY], data => {
         applyColorMappings(data[COLOR_STORAGE_KEY]);
     });

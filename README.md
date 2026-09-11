@@ -39,6 +39,25 @@ Modify the appearance of the Crunchyroll header to better match your preferences
 After installation, simply open Crunchyroll. The extension will automatically apply your configured enhancements and provide additional controls where applicable.
 You can adjust the settings in the pop-up. Simply click the extension icon, and the pop-up will open.
 
+## Development and tests
+
+The extension runs directly from the source files; no build step is required.
+Install Node.js 22 or newer, then run:
+
+```sh
+npm install
+npx playwright install chromium
+npm test
+```
+
+The tests cover cache handling and browser behavior using local fixtures and mocked
+extension storage. They do not contact Crunchyroll or require an account. To use an
+existing Chromium browser, set `CR_TOOLKIT_BROWSER` to its executable path.
+
+After changing the extension, reload it on the browser's extensions page and refresh
+open Crunchyroll tabs. Live playback and site selector compatibility still need a
+manual check against Crunchyroll.
+
 ## Disclaimer
 
 CR-Toolkit is an independent project and is not affiliated with, endorsed by, sponsored by, or associated with Crunchyroll, LLC.

@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
+<title>CR Toolkit settings</title>
 <style>
 :root {
     --primary-accent: #FF640A;
@@ -151,7 +152,7 @@ body {
 }
 
 .feat-item button:hover {
-    transition: background-color, border 0.2s;
+    transition: background-color 0.2s, border-color 0.2s;
     cursor: pointer;
     border: 1px solid var(--primary-accent);
     background-color: var(--secondary-accent);
@@ -178,12 +179,11 @@ body {
     align-items: center;
     margin: 10px;
     border: none;
-      border-radius: 0;
-      padding: 0;
+    border-radius: 0;
+    padding: 0;
 }
 
 input[type="color"] {
-    border: 1x solid transparent;
     width: 60px;
     height: 30px;
     border-radius: 5px;
@@ -253,6 +253,11 @@ input[type="checkbox"]:checked + .toggle-label::after {
     transform: translateX(22px);
 }
 
+input[type="checkbox"]:focus-visible + .toggle-label {
+    outline: 2px solid var(--primary-accent);
+    outline-offset: 3px;
+}
+
 .toggle-text {
     font-size: 16px;
     user-select: none;
@@ -282,20 +287,20 @@ input[type="checkbox"]:checked + .toggle-label::after {
         <div class="section-container">
             <div class="section-page" id="s-general">
                 <div class="feat-item">
-                    <span class="toggle-text">Player Resize</span>
-                    <input type="checkbox" id="toggle-player-resize">
+                    <span class="toggle-text" id="toggle-player-resize-text">Player Resize</span>
+                    <input type="checkbox" id="toggle-player-resize" aria-labelledby="toggle-player-resize-text">
                     <label for="toggle-player-resize" class="toggle-label"></label>
                 </div>
 
                 <div class="feat-item">
-                    <span class="toggle-text">Auto Skip OP/ED</span>
-                    <input type="checkbox" id="toggle-auto-skip">
+                    <span class="toggle-text" id="toggle-auto-skip-text">Auto Skip OP/ED</span>
+                    <input type="checkbox" id="toggle-auto-skip" aria-labelledby="toggle-auto-skip-text">
                     <label for="toggle-auto-skip" class="toggle-label"></label>
                 </div>
 
                 <div class="feat-item">
-                    <span class="toggle-text">Better Search</span>
-                    <input type="checkbox" id="toggle-better-search">
+                    <span class="toggle-text" id="toggle-better-search-text">Better Search</span>
+                    <input type="checkbox" id="toggle-better-search" aria-labelledby="toggle-better-search-text">
                     <label for="toggle-better-search" class="toggle-label"></label>
                 </div>
             </div>
@@ -330,62 +335,62 @@ input[type="checkbox"]:checked + .toggle-label::after {
                 </div>
 
                 <div class="feat-item">
-                    <span class="toggle-text">Hide Header on Playback</span>
-                    <input type="checkbox" id="toggle-hide-header">
+                    <span class="toggle-text" id="toggle-hide-header-text">Hide Header on Playback</span>
+                    <input type="checkbox" id="toggle-hide-header" aria-labelledby="toggle-hide-header-text">
                     <label for="toggle-hide-header" class="toggle-label"></label>
                 </div>
 
                 <div class="feat-item">
-                    <span class="toggle-text">Change Header</span>
-                    <input type="checkbox" id="toggle-change-header">
+                    <span class="toggle-text" id="toggle-change-header-text">Change Header</span>
+                    <input type="checkbox" id="toggle-change-header" aria-labelledby="toggle-change-header-text">
                     <label for="toggle-change-header" class="toggle-label"></label>
                 </div>
 
                 <div class="feat-item child">
-                    <span class="toggle-text">Remove: Logo</span>
-                    <input type="checkbox" id="toggle-change-header-logo">
+                    <span class="toggle-text" id="toggle-change-header-logo-text">Remove: Logo</span>
+                    <input type="checkbox" id="toggle-change-header-logo" aria-labelledby="toggle-change-header-logo-text">
                     <label for="toggle-change-header-logo" class="toggle-label"></label>
                 </div>
 
                 <div class="feat-item child">
-                    <span class="toggle-text">Remove: New</span>
-                    <input type="checkbox" id="toggle-change-header-new">
+                    <span class="toggle-text" id="toggle-change-header-new-text">Remove: New</span>
+                    <input type="checkbox" id="toggle-change-header-new" aria-labelledby="toggle-change-header-new-text">
                     <label for="toggle-change-header-new" class="toggle-label"></label>
                 </div>
 
                 <div class="feat-item child">
-                    <span class="toggle-text">Remove: Popular</span>
-                    <input type="checkbox" id="toggle-change-header-popular">
+                    <span class="toggle-text" id="toggle-change-header-popular-text">Remove: Popular</span>
+                    <input type="checkbox" id="toggle-change-header-popular" aria-labelledby="toggle-change-header-popular-text">
                     <label for="toggle-change-header-popular" class="toggle-label"></label>
                 </div>
 
                 <div class="feat-item child">
-                    <span class="toggle-text">Remove: Simulcast</span>
-                    <input type="checkbox" id="toggle-change-header-simulcast">
+                    <span class="toggle-text" id="toggle-change-header-simulcast-text">Remove: Simulcast</span>
+                    <input type="checkbox" id="toggle-change-header-simulcast" aria-labelledby="toggle-change-header-simulcast-text">
                     <label for="toggle-change-header-simulcast" class="toggle-label"></label>
                 </div>
 
                 <div class="feat-item child">
-                    <span class="toggle-text">Remove: Categories</span>
-                    <input type="checkbox" id="toggle-change-header-categories">
+                    <span class="toggle-text" id="toggle-change-header-categories-text">Remove: Categories</span>
+                    <input type="checkbox" id="toggle-change-header-categories" aria-labelledby="toggle-change-header-categories-text">
                     <label for="toggle-change-header-categories" class="toggle-label"></label>
                 </div>
 
                 <div class="feat-item child">
-                    <span class="toggle-text">Remove: Games</span>
-                    <input type="checkbox" id="toggle-change-header-games">
+                    <span class="toggle-text" id="toggle-change-header-games-text">Remove: Games</span>
+                    <input type="checkbox" id="toggle-change-header-games" aria-labelledby="toggle-change-header-games-text">
                     <label for="toggle-change-header-games" class="toggle-label"></label>
                 </div>
 
                 <div class="feat-item child">
-                    <span class="toggle-text">Remove: Store</span>
-                    <input type="checkbox" id="toggle-change-header-store">
+                    <span class="toggle-text" id="toggle-change-header-store-text">Remove: Store</span>
+                    <input type="checkbox" id="toggle-change-header-store" aria-labelledby="toggle-change-header-store-text">
                     <label for="toggle-change-header-store" class="toggle-label"></label>
                 </div>
 
                 <div class="feat-item child">
-                    <span class="toggle-text">Remove: News</span>
-                    <input type="checkbox" id="toggle-change-header-news">
+                    <span class="toggle-text" id="toggle-change-header-news-text">Remove: News</span>
+                    <input type="checkbox" id="toggle-change-header-news" aria-labelledby="toggle-change-header-news-text">
                     <label for="toggle-change-header-news" class="toggle-label"></label>
                 </div>
             </div>
@@ -397,7 +402,7 @@ input[type="checkbox"]:checked + .toggle-label::after {
 
         <span id="footer">
             Made with ❤️ by
-            <a href="https://darkplugins.de" target="_blank">DarkPlugins</a>
+            <a href="https://darkplugins.de" target="_blank" rel="noopener noreferrer">DarkPlugins</a>
         </span>
     </div>
 

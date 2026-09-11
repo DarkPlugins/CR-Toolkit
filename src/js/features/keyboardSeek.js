@@ -50,8 +50,8 @@ function getVideo() {
 
 function isEditableTarget(target) {
     return Boolean(target?.closest?.(
-        'input:not([type="range"]), textarea, select, [contenteditable="true"]'
-    ));
+        'input, textarea, select, [role="slider"], [role="textbox"]'
+    )) || Boolean(target?.isContentEditable);
 }
 
 function seekVideo(video, seconds) {
@@ -73,7 +73,9 @@ function seekVideo(video, seconds) {
 
 function handleKeydown(event) {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
-    if (!window.location.pathname.includes("/watch")) return;
+    if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey ||
+        event.shiftKey || event.isComposing) return;
+    if (!/(^|\/)watch(?:\/|$)/i.test(window.location.pathname)) return;
     if (isEditableTarget(event.target)) return;
 
     const direction = event.key === "ArrowLeft" ? "backward" : "forward";

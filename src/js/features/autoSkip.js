@@ -1,3 +1,4 @@
+(() => {
 const SKIP_MARKER_SELECTORS = [
     // Current player: these markers are independent of the selected language.
     '[data-testid="skipIntroText"]',
@@ -17,9 +18,26 @@ let initialized = false;
 let intervalId = null;
 let lastClick = 0;
 let skipInProgress = false;
+let enabled = true;
+let controller = null;
 
-function wait(ms) {
-    return new Promise(r => setTimeout(r, ms));
+function wait(ms, signal, video = null) {
+    return new Promise(resolve => {
+        const finish = resumed => {
+            clearTimeout(timer);
+            signal.removeEventListener("abort", onAbort);
+            video?.removeEventListener("play", onPlay);
+            video?.removeEventListener("playing", onPlay);
+            resolve(resumed);
+        };
+        const onAbort = () => finish(false);
+        const onPlay = () => finish(true);
+        const timer = setTimeout(() => finish(!video), ms);
+        signal.addEventListener("abort", onAbort, { once: true });
+        video?.addEventListener("play", onPlay, { once: true });
+        video?.addEventListener("playing", onPlay, { once: true });
+        if (signal.aborted) finish(false);
+    });
 }
 
 function getVideo() {
@@ -61,17 +79,12 @@ function getSkipButton() {
         if (button) return button;
     }
 
-    // Legacy player fallback. Restrict it to the player controls so that
-    // unrelated primary buttons elsewhere on the page are never clicked.
-    const legacyButton = document.querySelector(
-        '[data-testid="player-controls-root"] button[data-variant="primary"]'
-    );
-
-    return isVisible(legacyButton) ? legacyButton : null;
+    return null;
 }
 
 async function trySkip() {
-    if (skipInProgress) return;
+    if (skipInProgress || !controller || controller.signal.aborted) return;
+    const signal = controller.signal;
 
     const btn = getSkipButton();
 
@@ -85,36 +98,20 @@ async function trySkip() {
     try {
         const video = getVideo();
 
-        if (video) {
-            if (video.paused) {
-                const resumed = await Promise.race([
-                    new Promise(resolve => {
-                        const onPlay = () => {
-                            video.removeEventListener("play", onPlay);
-                            video.removeEventListener("playing", onPlay);
-                            resolve(true);
-                        };
-
-                        video.addEventListener("play", onPlay, { once: true });
-                        video.addEventListener("playing", onPlay, { once: true });
-                    }),
-                    wait(2500).then(() => false)
-                ]);
-
-                if (!resumed && video.paused) return;
-            }
-
-            await wait(PLAY_DELAY_MS);
-        } else {
-            await wait(PLAY_DELAY_MS);
+        if (video?.paused) {
+            const resumed = await wait(2500, signal, video);
+            if (!resumed && video.paused) return;
         }
+
+        if (!await wait(PLAY_DELAY_MS, signal)) return;
+        if (signal.aborted || !/(^|\/)watch(?:\/|$)/i.test(location.pathname)) return;
+        if (video && (video !== getVideo() || video.paused || video.ended)) return;
 
         const currentBtn = getSkipButton();
         if (!currentBtn) return;
 
         lastClick = Date.now();
 
-        // IMPORTANT: no MouseEvent spam anymore
         currentBtn.click();
     } finally {
         skipInProgress = false;
@@ -123,13 +120,17 @@ async function trySkip() {
 
 function start() {
     if (intervalId) return;
+    controller = new AbortController();
+    lastClick = 0;
 
     intervalId = setInterval(() => {
-        trySkip();
+        trySkip().catch(error => console.warn("CR-Toolkit: Auto-skip failed", error));
     }, CHECK_INTERVAL);
 }
 
 function stop() {
+    controller?.abort();
+    controller = null;
     if (intervalId) {
         clearInterval(intervalId);
         intervalId = null;
@@ -137,28 +138,26 @@ function stop() {
 }
 
 function applyAutoSkip() {
-    chrome.storage.sync.get(["enabled_auto_skip"], (data) => {
-        if (Boolean(data.enabled_auto_skip) && window.CRToolkit && window.CRToolkit.currentUrl &&
-            window.CRToolkit.currentUrl.indexOf("watch") !== -1)
-        {
-            start();
-        }
-        else {
-            stop();
-        }
-    });
+    // Cancel pending work even when navigating directly to another episode.
+    stop();
+    if (enabled && /(^|\/)watch(?:\/|$)/i.test(location.pathname)) start();
 }
 
 function initAutoSkip() {
     if (initialized) return;
     initialized = true;
+    chrome.storage.sync.get(["enabled_auto_skip"], data => {
+        enabled = data.enabled_auto_skip ?? true;
+        applyAutoSkip();
+    });
 
     // Apply listener
     chrome.storage.onChanged.addListener((changes, area) => {
         if (area !== "sync") return;
 
         if (changes.enabled_auto_skip) {
-            applyAutoSkip(changes.enabled_auto_skip.newValue);
+            enabled = changes.enabled_auto_skip.newValue ?? true;
+            applyAutoSkip();
         }
     });
 }
@@ -167,3 +166,4 @@ window.CRToolkit = window.CRToolkit || {};
 window.CRToolkit.AutoSkip = window.CRToolkit.AutoSkip || {};
 window.CRToolkit.AutoSkip.init = initAutoSkip;
 window.CRToolkit.AutoSkip.apply = applyAutoSkip;
+})();

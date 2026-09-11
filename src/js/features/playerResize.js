@@ -1,70 +1,56 @@
-const STYLE_ID = "cr-player-resize-style";
+(() => {
+    const STYLE_ID = "cr-player-resize-style";
+    const WATCH_KEYS = ["enabled_player_resize", "enabled_hide_header"];
+    let initialized = false;
+    let enabledPlayerResize = true;
+    let enabledHideHeader = false;
 
-function applyPlayerResize() {
-    chrome.storage.sync.get(
-        ["enabled_player_resize", "enabled_hide_header"],
-        (data) => {
-            const enabledPlayerResize = data.enabled_player_resize ?? true;
-            const enabledHideHeader = data.enabled_hide_header ?? true;
-
-            let style = document.getElementById(STYLE_ID);
-            if (enabledPlayerResize) {
-                if (!style) {
-                    style = document.createElement("style");
-                    style.id = STYLE_ID;
-                    document.head.appendChild(style);
-                }
-
-                style.textContent = getStyle(enabledHideHeader);
-            } else {
-                style?.remove();
-            }
+    function applyPlayerResize() {
+        let style = document.getElementById(STYLE_ID);
+        if (!enabledPlayerResize) {
+            style?.remove();
+            return;
         }
-    );
-}
-
-function getStyle(enabledHideHeader) {
-    let height;
-    if (enabledHideHeader) {
-        height = "100vh";
-    } else {
-        height = "90vh";
+        if (!style) {
+            style = document.createElement("style");
+            style.id = STYLE_ID;
+            (document.head || document.documentElement).appendChild(style);
+        }
+        const css = `
+            .erc-watch-episode .video-player-wrapper {
+                height: ${enabledHideHeader ? "100vh" : "90vh"} !important;
+                transition: height 0.3s ease;
+            }
+            .erc-watch-episode .erc-current-media-info {
+                display: none !important;
+            }
+            body.scrolled .erc-watch-episode .erc-current-media-info {
+                display: block !important;
+            }
+        `;
+        if (style.textContent !== css) style.textContent = css;
     }
 
-    return `
-        .erc-watch-episode .video-player-wrapper {
-            height: ${height} !important;
-            transition: height 0.3s ease;
-        }
-
-        .erc-watch-episode .erc-current-media-info {
-            display: none !important;
-        }
-
-        body.scrolled .erc-watch-episode .erc-current-media-info {
-            display: block !important;
-        }
-    `;
-}
-
-function initPlayerResize() {
-    // Apply listener
-    const WATCH_KEYS = [
-        "enabled_player_resize",
-        "enabled_hide_header"
-    ];
-    chrome.storage.onChanged.addListener((changes, area) => {
-        if (area !== "sync") return;
-
-        const shouldUpdate = WATCH_KEYS.some(key => changes[key]);
-
-        if (shouldUpdate) {
+    function initPlayerResize() {
+        if (initialized) return;
+        initialized = true;
+        chrome.storage.sync.get(WATCH_KEYS, data => {
+            enabledPlayerResize = data.enabled_player_resize ?? true;
+            enabledHideHeader = data.enabled_hide_header ?? false;
             applyPlayerResize();
-        }
-    });
-}
+        });
+        chrome.storage.onChanged.addListener((changes, area) => {
+            if (area !== "sync" || !WATCH_KEYS.some(key => changes[key])) return;
+            if (changes.enabled_player_resize) {
+                enabledPlayerResize = changes.enabled_player_resize.newValue ?? true;
+            }
+            if (changes.enabled_hide_header) {
+                enabledHideHeader = changes.enabled_hide_header.newValue ?? false;
+            }
+            applyPlayerResize();
+        });
+    }
 
-window.CRToolkit = window.CRToolkit || {};
-window.CRToolkit.PlayerResize = window.CRToolkit.PlayerResize || {};
-window.CRToolkit.PlayerResize.init = initPlayerResize;
-window.CRToolkit.PlayerResize.apply = applyPlayerResize;
+    window.CRToolkit = window.CRToolkit || {};
+    window.CRToolkit.PlayerResize = { init: initPlayerResize, apply: applyPlayerResize };
+})();

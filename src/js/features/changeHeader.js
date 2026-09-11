@@ -1,112 +1,60 @@
-let currentState = null;
-const HEADER_CLASS_ELEMENTS = {
-    logo: "header-logo",                // Logo
-    categories: "header-menu",          // Categories
-    news: "erc-news-menu"               // News
-};
-const HEADER_DATAT_ELEMENTS = {
-    new: "header-menu-new",             // New
-    popular: "header-menu-popular",     // Popular
-    simulcast: "header-menu-simulcast", // Simulcast
-    games: "header-menu-games",         // Games
-    store: "header-menu-store"          // Store
-};
+(() => {
+    const SELECTORS = {
+        logo: ".header-logo",
+        categories: ".header-menu",
+        news: ".erc-news-menu",
+        new: '[data-t="header-menu-new"]',
+        popular: '[data-t="header-menu-popular"]',
+        simulcast: '[data-t="header-menu-simulcast"]',
+        games: '[data-t="header-menu-games"]',
+        store: '[data-t="header-menu-store"]'
+    };
+    const KEYS = ["enabled_change_header", ...Object.keys(SELECTORS).map(
+        key => `enabled_change_header_${key}`
+    )];
+    let initialized = false;
+    let state = {};
+    let style = null;
 
-function applyChangeHeader(state) {
-    const globalEnabled = state.enabled ?? false;
-
-    // Class-based elements
-    Object.entries(HEADER_CLASS_ELEMENTS).forEach(([key, className]) => {
-        const headerEls = document.getElementsByClassName(className);
-        if (!headerEls || headerEls.length === 0) return;
-
-        const enabled = globalEnabled && (state[key] ?? false);
-        setProperty(headerEls, enabled);
-    });
-
-    // data-t elements
-    Object.entries(HEADER_DATAT_ELEMENTS).forEach(([key, dataVal]) => {
-        const headerEls = document.querySelectorAll(`[data-t="${dataVal}"]`);
-        if (!headerEls || headerEls.length === 0) return;
-
-        const enabled = globalEnabled && (state[key] ?? false);
-        setProperty(headerEls, enabled);
-    });
-}
-
-function setProperty(elements, enabled) {
-    Array.from(elements).forEach(el => {
-        if (!el) return;
-        el.style.setProperty("display", !enabled ? "" : "none", "important");
-    });
-}
-
-function initChangeHeader() {
-    chrome.storage.sync.get(
-        [
-            "enabled_change_header",
-            "enabled_change_header_logo",
-            "enabled_change_header_new",
-            "enabled_change_header_popular",
-            "enabled_change_header_simulcast",
-            "enabled_change_header_categories",
-            "enabled_change_header_games",
-            "enabled_change_header_store",
-            "enabled_change_header_news"
-        ],
-        (data) => {
-            currentState = {
-                enabled: data.enabled_change_header ?? false,
-                logo: data.enabled_change_header_logo ?? false,
-                new: data.enabled_change_header_new ?? false,
-                popular: data.enabled_change_header_popular ?? false,
-                simulcast: data.enabled_change_header_simulcast ?? false,
-                categories: data.enabled_change_header_categories ?? false,
-                games: data.enabled_change_header_games ?? false,
-                store: data.enabled_change_header_store ?? false,
-                news: data.enabled_change_header_news ?? false
-            };
-
-            applyChangeHeader(currentState);
+    function applyChangeHeader() {
+        const selectors = state.enabled_change_header
+            ? Object.entries(SELECTORS)
+                .filter(([key]) => state[`enabled_change_header_${key}`])
+                .map(([, selector]) => selector)
+            : [];
+        if (!selectors.length) {
+            style?.remove();
+            style = null;
+            return;
         }
-    );
+        if (!style) {
+            style = document.createElement("style");
+            style.id = "cr-change-header-style";
+            (document.head || document.documentElement).appendChild(style);
+        }
+        const css = `${selectors.join(",")} { display: none !important; }`;
+        if (style.textContent !== css) style.textContent = css;
+    }
 
-    // Apply listener
-    chrome.storage.onChanged.addListener((changes, area) => {
-        if (area !== "sync") return;
-        if (!currentState) return;
+    function initChangeHeader() {
+        if (initialized) return;
+        initialized = true;
+        chrome.storage.sync.get(KEYS, data => {
+            state = data;
+            applyChangeHeader();
+        });
+        chrome.storage.onChanged.addListener((changes, area) => {
+            if (area !== "sync") return;
+            let changed = false;
+            for (const key of KEYS) {
+                if (!changes[key]) continue;
+                state[key] = changes[key].newValue;
+                changed = true;
+            }
+            if (changed) applyChangeHeader();
+        });
+    }
 
-        if (changes.enabled_change_header)
-            currentState.enabled = changes.enabled_change_header.newValue;
-
-        if (changes.enabled_change_header_logo)
-            currentState.logo = changes.enabled_change_header_logo.newValue;
-
-        if (changes.enabled_change_header_new)
-            currentState.new = changes.enabled_change_header_new.newValue;
-
-        if (changes.enabled_change_header_popular)
-            currentState.popular = changes.enabled_change_header_popular.newValue;
-
-        if (changes.enabled_change_header_simulcast)
-            currentState.simulcast = changes.enabled_change_header_simulcast.newValue;
-
-        if (changes.enabled_change_header_categories)
-            currentState.categories = changes.enabled_change_header_categories.newValue;
-
-        if (changes.enabled_change_header_games)
-            currentState.games = changes.enabled_change_header_games.newValue;
-
-        if (changes.enabled_change_header_store)
-            currentState.store = changes.enabled_change_header_store.newValue;
-
-        if (changes.enabled_change_header_news)
-            currentState.news = changes.enabled_change_header_news.newValue;
-
-        applyChangeHeader(currentState);
-    });
-}
-
-window.CRToolkit = window.CRToolkit || {};
-window.CRToolkit.ChangeHeader = window.CRToolkit.ChangeHeader || {};
-window.CRToolkit.ChangeHeader.init = initChangeHeader;
+    window.CRToolkit = window.CRToolkit || {};
+    window.CRToolkit.ChangeHeader = { init: initChangeHeader };
+})();

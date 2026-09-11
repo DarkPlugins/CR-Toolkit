@@ -11,38 +11,41 @@ function updateHeaderChildrenState(children, enabled) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    const checkboxPlayerResize = document.getElementById("toggle-player-resize");
-    const checkboxAutoSkip = document.getElementById("toggle-auto-skip");
-    const checkboxHideHeader = document.getElementById("toggle-hide-header");
-    const checkBoxChangeHeader = document.getElementById("toggle-change-header");
-    const checkBoxChangeHeaderLogo = document.getElementById("toggle-change-header-logo");
-    const checkBoxChangeHeaderNew = document.getElementById("toggle-change-header-new");
-    const checkBoxChangeHeaderPopular = document.getElementById("toggle-change-header-popular");
-    const checkBoxChangeHeaderSimulcast = document.getElementById("toggle-change-header-simulcast");
-    const checkBoxChangeHeaderCategories = document.getElementById("toggle-change-header-categories");
-    const checkBoxChangeHeaderGames = document.getElementById("toggle-change-header-games");
-    const checkBoxChangeHeaderStore = document.getElementById("toggle-change-header-store");
-    const checkBoxChangeHeaderNews = document.getElementById("toggle-change-header-news");
-    const checkBoxChangeHeaderChildren = [
-        checkBoxChangeHeaderLogo,
-        checkBoxChangeHeaderNew,
-        checkBoxChangeHeaderPopular,
-        checkBoxChangeHeaderSimulcast,
-        checkBoxChangeHeaderCategories,
-        checkBoxChangeHeaderGames,
-        checkBoxChangeHeaderStore,
-        checkBoxChangeHeaderNews
-    ];
-    // Feature: Change Colors
+    const featureDefaults = {
+        player_resize: true,
+        auto_skip: true,
+        better_search: true,
+        hide_header: false,
+        change_header: false,
+        change_header_logo: false,
+        change_header_new: false,
+        change_header_popular: false,
+        change_header_simulcast: false,
+        change_header_categories: false,
+        change_header_games: false,
+        change_header_store: false,
+        change_header_news: false
+    };
+    const featureCheckboxes = Object.entries(featureDefaults).map(([feature, fallback]) => ({
+        key: `enabled_${feature}`,
+        fallback,
+        checkbox: document.getElementById(`toggle-${feature.replaceAll('_', '-')}`)
+    }));
+    const headerChildren = featureCheckboxes
+        .filter(({ key }) => key.startsWith('enabled_change_header_'))
+        .map(({ checkbox }) => checkbox);
+    const headerCheckbox = document.getElementById('toggle-change-header');
     const btnAddNewColor = document.getElementById('btn-add-color');
     const btnAddPageColors = document.getElementById('btn-add-page-colors');
     const colorSort = document.getElementById('color-sort');
-    const checkboxBetterSearch = document.getElementById("toggle-better-search");
 
     const navButtons = document.querySelectorAll(".nav-btn");
     const sections = document.querySelectorAll(".section-page");
 
-    function showSection(sectionId) {
+    function showSection(sectionId, persist = true) {
+        if (!Array.from(sections).some(section => section.id === sectionId)) {
+            sectionId = "s-general";
+        }
         sections.forEach((section) => {
             section.classList.toggle("active", section.id === sectionId);
         });
@@ -54,82 +57,21 @@ document.addEventListener("DOMContentLoaded", () => {
             );
         });
 
-        chrome.storage.sync.set({
-            active_popup_section: sectionId
-        });
+        if (persist) chrome.storage.sync.set({ active_popup_section: sectionId });
     }
 
-    // Load current status
-    chrome.storage.sync.get(
-        [
-            "enabled_player_resize",
-            "enabled_auto_skip",
-            "active_popup_section",
-            "enabled_hide_header",
-            "enabled_change_header",
-            "enabled_change_header_logo",
-            "enabled_change_header_new",
-            "enabled_change_header_popular",
-            "enabled_change_header_simulcast",
-            "enabled_change_header_categories",
-            "enabled_change_header_games",
-            "enabled_change_header_store",
-            "enabled_change_header_news",
-            "color_mappings",
-            "color_sort_order",
-            "enabled_better_search"
-        ],
-        (data) => {
-            checkboxPlayerResize.checked =
-                data.enabled_player_resize ?? true;
-
-            checkboxAutoSkip.checked =
-                data.enabled_auto_skip ?? true;
-
-            checkboxHideHeader.checked =
-                data.enabled_hide_header ?? true;
-                
-            checkBoxChangeHeader.checked =
-                data.enabled_change_header ?? false;
-
-            checkBoxChangeHeaderLogo.checked =
-                data.enabled_change_header_logo ?? false;
-
-            checkBoxChangeHeaderNew.checked =
-                data.enabled_change_header_new ?? false;
-
-            checkBoxChangeHeaderPopular.checked =
-                data.enabled_change_header_popular ?? false;
-
-            checkBoxChangeHeaderSimulcast.checked =
-                data.enabled_change_header_simulcast ?? false;
-
-            checkBoxChangeHeaderCategories.checked =
-                data.enabled_change_header_categories ?? false;
-
-            checkBoxChangeHeaderGames.checked =
-                data.enabled_change_header_games ?? false;
-
-            checkBoxChangeHeaderStore.checked =
-                data.enabled_change_header_store ?? false;
-
-            checkBoxChangeHeaderNews.checked =
-                data.enabled_change_header_news ?? false;
-
-            updateHeaderChildrenState(checkBoxChangeHeaderChildren, checkBoxChangeHeader.checked);
-
-            if (colorSort) {
-                colorSort.value = data.color_sort_order === 'color' ? 'color' : 'added';
-            }
-            renderColorMappings(data.color_mappings ?? []);
-            checkboxBetterSearch.checked =
-                data.enabled_better_search ?? true;
-
-            showSection(
-                data.active_popup_section ?? "s-general"
-            );
-        }
-    );
+    chrome.storage.sync.get([
+        ...featureCheckboxes.map(({ key }) => key),
+        "active_popup_section", "color_mappings", "color_sort_order"
+    ], data => {
+        featureCheckboxes.forEach(({ key, fallback, checkbox }) => {
+            checkbox.checked = data[key] ?? fallback;
+        });
+        updateHeaderChildrenState(headerChildren, headerCheckbox.checked);
+        colorSort.value = data.color_sort_order === 'color' ? 'color' : 'added';
+        renderColorMappings(data.color_mappings);
+        showSection(data.active_popup_section ?? "s-general", false);
+    });
 
     // Navigation
     navButtons.forEach((button) => {
@@ -138,86 +80,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Save changes
-    checkboxPlayerResize.addEventListener("change", () => {
-        chrome.storage.sync.set({
-            enabled_player_resize: checkboxPlayerResize.checked
-        });
-    });
-
-    checkboxAutoSkip.addEventListener("change", () => {
-        chrome.storage.sync.set({
-            enabled_auto_skip: checkboxAutoSkip.checked
-        });
-    });
-
-    checkboxBetterSearch.addEventListener("change", () => {
-        chrome.storage.sync.set({
-            enabled_better_search: checkboxBetterSearch.checked
-        });
-    });
-
-    checkboxHideHeader.addEventListener("change", () => {
-        chrome.storage.sync.set({
-            enabled_hide_header: checkboxHideHeader.checked
-        });
-    });
-    
-    checkBoxChangeHeader.addEventListener("change", () => {
-        const enabled = checkBoxChangeHeader.checked;
-
-        chrome.storage.sync.set({
-            enabled_change_header: enabled
-        });
-
-        updateHeaderChildrenState(checkBoxChangeHeaderChildren, enabled);
-    });
-
-    checkBoxChangeHeaderLogo.addEventListener("change", () => {
-        chrome.storage.sync.set({
-            enabled_change_header_logo: checkBoxChangeHeaderLogo.checked
-        });
-    });
-
-    checkBoxChangeHeaderNew.addEventListener("change", () => {
-        chrome.storage.sync.set({
-            enabled_change_header_new: checkBoxChangeHeaderNew.checked
-        });
-    });
-
-    checkBoxChangeHeaderPopular.addEventListener("change", () => {
-        chrome.storage.sync.set({
-            enabled_change_header_popular: checkBoxChangeHeaderPopular.checked
-        });
-    });
-
-    checkBoxChangeHeaderSimulcast.addEventListener("change", () => {
-        chrome.storage.sync.set({
-            enabled_change_header_simulcast: checkBoxChangeHeaderSimulcast.checked
-        });
-    });
-
-    checkBoxChangeHeaderCategories.addEventListener("change", () => {
-        chrome.storage.sync.set({
-            enabled_change_header_categories: checkBoxChangeHeaderCategories.checked
-        });
-    });
-
-    checkBoxChangeHeaderGames.addEventListener("change", () => {
-        chrome.storage.sync.set({
-            enabled_change_header_games: checkBoxChangeHeaderGames.checked
-        });
-    });
-
-    checkBoxChangeHeaderStore.addEventListener("change", () => {
-        chrome.storage.sync.set({
-            enabled_change_header_store: checkBoxChangeHeaderStore.checked
-        });
-    });
-
-    checkBoxChangeHeaderNews.addEventListener("change", () => {
-        chrome.storage.sync.set({
-            enabled_change_header_news: checkBoxChangeHeaderNews.checked
+    featureCheckboxes.forEach(({ key, checkbox }) => {
+        checkbox.addEventListener("change", () => {
+            chrome.storage.sync.set({ [key]: checkbox.checked });
+            if (checkbox === headerCheckbox) {
+                updateHeaderChildrenState(headerChildren, checkbox.checked);
+            }
         });
     });
 
@@ -330,11 +198,7 @@ function collectColorsFromCurrentPage() {
             .join('')}`;
     };
 
-    return Array.from(rawColors)
-        .map(normalizeColor)
-        .filter(Boolean)
-        .filter((color, index, colors) => colors.indexOf(color) === index)
-        .sort();
+    return [...new Set(Array.from(rawColors).map(normalizeColor).filter(Boolean))].sort();
 }
 
 async function addColorsFromCurrentPage() {
@@ -385,8 +249,11 @@ async function addColorsFromCurrentPage() {
         }
 
         renderColorMappings([...currentMappings, ...newMappings]);
-        saveColorMappings();
-        window.alert(`${newMappings.length} new colors were added.`);
+        if (await saveColorMappings()) {
+            window.alert(`${newMappings.length} new colors were added.`);
+        } else {
+            renderColorMappings(currentMappings);
+        }
     } catch (error) {
         console.error('CR-Toolkit: Could not collect Crunchyroll colors', error);
         window.alert('The colors could not be collected. Is a Crunchyroll page open in the active tab?');
@@ -395,13 +262,20 @@ async function addColorsFromCurrentPage() {
     }
 }
 
-function saveColorMappings() {
+async function saveColorMappings() {
     const colorList = document.getElementById("list-colors");
     if (!colorList) return;
 
     const mappings = getColorMappings();
 
-    chrome.storage.sync.set({ color_mappings: mappings });
+    try {
+        await chrome.storage.sync.set({ color_mappings: mappings });
+        return true;
+    } catch (error) {
+        console.error('CR-Toolkit: Could not save color mappings', error);
+        window.alert('The colors could not be saved. The browser sync storage may be full. Remove some color mappings and try again.');
+        return false;
+    }
 }
 
 function getColorMappings() {
@@ -472,15 +346,15 @@ function sortColorMappings(mappings) {
     const sortMode = document.getElementById('color-sort')?.value ?? 'added';
 
     return normalized
-        .map((mapping, index) => ({ mapping, index }))
+        .map((mapping, index) => ({ mapping, index, colorKey: sortMode === 'color' ? getColorSortKey(mapping.from) : null }))
         .sort((first, second) => {
             if (sortMode !== 'color') {
                 return first.mapping.addedAt - second.mapping.addedAt ||
                     first.index - second.index;
             }
 
-            const firstKey = getColorSortKey(first.mapping.from);
-            const secondKey = getColorSortKey(second.mapping.from);
+            const firstKey = first.colorKey;
+            const secondKey = second.colorKey;
             for (let index = 0; index < firstKey.length; index += 1) {
                 if (firstKey[index] !== secondKey[index]) {
                     return firstKey[index] - secondKey[index];
@@ -530,6 +404,7 @@ function addColorRow(mapping = {}) {
     from.name = `color-from-${colorCounter}`;
     from.id = `color-from-${colorCounter}`;
     from.value = mapping.from || DEFAULT_FROM_COLOR;
+    from.setAttribute('aria-label', 'Original color');
 
     const sep = document.createElement('span');
     sep.textContent = '→';
@@ -540,10 +415,12 @@ function addColorRow(mapping = {}) {
     to.name = `color-to-${colorCounter}`;
     to.id = `color-to-${colorCounter}`;
     to.value = mapping.to || DEFAULT_TO_COLOR;
+    to.setAttribute('aria-label', 'Replacement color');
 
     const removeBtn = document.createElement('button');
     removeBtn.type = 'button';
     removeBtn.textContent = '✕';
+    removeBtn.setAttribute('aria-label', 'Remove color mapping');
     removeBtn.addEventListener('click', () => {
         row.remove();
 
@@ -554,8 +431,7 @@ function addColorRow(mapping = {}) {
         saveColorMappings();
     });
 
-    from.addEventListener('input', saveColorMappings);
-    to.addEventListener('input', saveColorMappings);
+    to.addEventListener('change', saveColorMappings);
     from.addEventListener('change', () => {
         if (document.getElementById('color-sort')?.value === 'color') {
             const mappings = getColorMappings();

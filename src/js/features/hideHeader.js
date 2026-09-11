@@ -1,66 +1,61 @@
-function applyHideHeader() {
-    chrome.storage.sync.get(
-        ["enabled_hide_header"],
-        (data) => {
-            const enabled = data.enabled_hide_header;
+(() => {
+    let initialized = false;
+    let enabled = false;
+    let active = false;
+    let visible = false;
 
-            const headerEl = window.CRToolkit.getClassElement("header_sub");
-            const headerBackEl = window.CRToolkit.getClassElement("header");
-
-            if (!headerEl) return;
-
-            if (enabled && window.location.pathname.includes("watch")) {
-                headerEl.style.opacity = "0";
-                headerEl.style.pointerEvents = "none";
-                headerEl.style.transition = "opacity 0.25s";
-
-                if (headerBackEl) {
-                    headerBackEl.style.position = "absolute";
-                }
-
-                // Show when hovering over the top edge of the screen
-                document.addEventListener("mousemove", handleMouseMove);
-            } else {
-                headerEl.style.opacity = "1";
-                headerEl.style.pointerEvents = "auto";
-
-                if (headerBackEl) {
-                    headerBackEl.style.position = "relative";
-                }
-
-                document.removeEventListener("mousemove", handleMouseMove);
-            }
-        }
-    );
-}
-
-function handleMouseMove(event) {
-    const headerEl = window.CRToolkit.getClassElement("header_sub");
-
-    if (!headerEl) return;
-
-    // Show header when the mouse is in the top 50px of the window
-    if (event.clientY <= 50) {
-        headerEl.style.opacity = "1";
-        headerEl.style.pointerEvents = "auto";
-    } else {
-        headerEl.style.opacity = "0";
-        headerEl.style.pointerEvents = "none";
+    function handleMouseMove(event) {
+        const nextVisible = event.clientY <= 50;
+        if (visible === nextVisible) return;
+        visible = nextVisible;
+        document.documentElement.classList.toggle("cr-header-visible", visible);
     }
-}
 
-function initHideHeader() {
-    // Apply listener
-    chrome.storage.onChanged.addListener((changes, area) => {
-        if (area !== "sync") return;
-
-        if (changes.enabled_hide_header) {
-            apply();
+    function applyHideHeader() {
+        const nextActive = enabled && /(^|\/)watch(?:\/|$)/i.test(location.pathname);
+        if (active === nextActive) return;
+        active = nextActive;
+        visible = false;
+        document.documentElement.classList.toggle("cr-hide-header", active);
+        document.documentElement.classList.remove("cr-header-visible");
+        if (active) {
+            document.addEventListener("mousemove", handleMouseMove, { passive: true });
+        } else {
+            document.removeEventListener("mousemove", handleMouseMove);
         }
-    });
-}
+    }
 
-window.CRToolkit = window.CRToolkit || {};
-window.CRToolkit.HideHeader = window.CRToolkit.HideHeader || {};
-window.CRToolkit.HideHeader.init = initHideHeader;
-window.CRToolkit.HideHeader.apply = applyHideHeader;
+    function initHideHeader() {
+        if (initialized) return;
+        initialized = true;
+        const style = document.createElement("style");
+        style.id = "cr-hide-header-style";
+        style.textContent = `
+            html.cr-hide-header .erc-large-header {
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.25s;
+            }
+            html.cr-hide-header.cr-header-visible .erc-large-header {
+                opacity: 1;
+                pointer-events: auto;
+            }
+            html.cr-hide-header [class*="app-layout__header--"] {
+                position: absolute;
+            }
+        `;
+        (document.head || document.documentElement).appendChild(style);
+        chrome.storage.sync.get(["enabled_hide_header"], data => {
+            enabled = data.enabled_hide_header ?? false;
+            applyHideHeader();
+        });
+        chrome.storage.onChanged.addListener((changes, area) => {
+            if (area !== "sync" || !changes.enabled_hide_header) return;
+            enabled = changes.enabled_hide_header.newValue ?? false;
+            applyHideHeader();
+        });
+    }
+
+    window.CRToolkit = window.CRToolkit || {};
+    window.CRToolkit.HideHeader = { init: initHideHeader, apply: applyHideHeader };
+})();

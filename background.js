@@ -46,7 +46,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         return true;
     }
 
-    if (!msg || !msg.type?.startsWith("CR_BETTER_SEARCH_")) {
+    if (typeof msg?.type !== "string" || !msg.type.startsWith("CR_BETTER_SEARCH_")) {
         return false;
     }
 
@@ -205,15 +205,18 @@ function cleanCacheState(state) {
     const cleaned = state && typeof state === "object"
         ? state
         : {tabs: {}};
-    cleaned.tabs = cleaned.tabs && typeof cleaned.tabs === "object"
+    cleaned.tabs = cleaned.tabs && typeof cleaned.tabs === "object" && !Array.isArray(cleaned.tabs)
         ? cleaned.tabs
         : {};
 
     const now = Date.now();
     Object.entries(cleaned.tabs).forEach(([tabKey, tabCache]) => {
-        if (!tabCache || !Array.isArray(tabCache.records) ||
-            now - Number(tabCache.updatedAt || 0) > BETTER_SEARCH_CACHE_TTL) {
+        const updatedAt = Number(tabCache?.updatedAt);
+        if (!tabCache || !Array.isArray(tabCache.records) || !Number.isFinite(updatedAt) ||
+            updatedAt > now || now - updatedAt > BETTER_SEARCH_CACHE_TTL) {
             delete cleaned.tabs[tabKey];
+        } else {
+            tabCache.records = tabCache.records.filter(isCacheRecord).slice(-500);
         }
     });
 
@@ -222,21 +225,32 @@ function cleanCacheState(state) {
 
 function mergeRecords(existingRecords, incomingRecords) {
     const records = Array.isArray(existingRecords)
-        ? existingRecords
+        ? existingRecords.filter(isCacheRecord).slice(-500).map(normalizeCacheRecord)
         : [];
+    const byId = new Map();
+    const byTitle = new Map();
+    const indexRecord = record => {
+        record.ids.forEach(id => byId.set(id, record));
+        record.titles.forEach(title => byTitle.set(title, record));
+    };
+    records.forEach(indexRecord);
 
     if (!Array.isArray(incomingRecords)) {
         return records;
     }
 
-    incomingRecords.forEach(incoming => {
-        if (!isCacheRecord(incoming)) {
+    incomingRecords.slice(-500).forEach(value => {
+        if (!isCacheRecord(value)) {
             return;
         }
 
-        const existing = records.find(record => recordsOverlap(record, incoming));
+        const incoming = normalizeCacheRecord(value);
+        if (!incoming.ids.length && !incoming.titles.length) return;
+        const existing = incoming.ids.map(id => byId.get(id)).find(Boolean) ||
+            incoming.titles.map(title => byTitle.get(title)).find(Boolean);
         if (!existing) {
-            records.push(normalizeCacheRecord(incoming));
+            records.push(incoming);
+            indexRecord(incoming);
             return;
         }
 
@@ -250,6 +264,7 @@ function mergeRecords(existingRecords, incomingRecords) {
         );
         existing.hasDub = mergeFlag(existing.hasDub, incoming.hasDub);
         existing.hasSub = mergeFlag(existing.hasSub, incoming.hasSub);
+        indexRecord(existing);
     });
 
     return records.slice(-500);
@@ -263,20 +278,22 @@ function isCacheRecord(record) {
 }
 
 function normalizeCacheRecord(record) {
+    const normalizeValues = values => unique(values
+        .filter(value => typeof value === "string")
+        .map(value => value.trim().toLowerCase().replace(/\s+/g, " "))
+        .filter(value => value && value.length <= 300)
+        .slice(0, 100));
+    const ids = normalizeValues(record.ids);
+    const titles = normalizeValues(record.titles);
     return {
-        cacheKey: record.cacheKey || record.ids[0] || `title:${record.titles[0]}`,
-        ids: unique(record.ids.map(value => String(value).toLowerCase())),
-        titles: unique(record.titles.map(value => String(value).toLowerCase())),
-        audioLocales: unique(record.audioLocales.map(value => String(value).toLowerCase())),
-        subtitleLocales: unique(record.subtitleLocales.map(value => String(value).toLowerCase())),
+        cacheKey: ids[0] || `title:${titles[0]}`,
+        ids,
+        titles,
+        audioLocales: normalizeValues(record.audioLocales),
+        subtitleLocales: normalizeValues(record.subtitleLocales),
         hasDub: normalizeFlag(record.hasDub),
         hasSub: normalizeFlag(record.hasSub)
     };
-}
-
-function recordsOverlap(left, right) {
-    return left.ids.some(id => right.ids.includes(id)) ||
-        left.titles.some(title => right.titles.includes(title));
 }
 
 function normalizeFlag(value) {

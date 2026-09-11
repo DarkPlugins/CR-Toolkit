@@ -1,19 +1,14 @@
-const CLASS_NAMES = {
-    header: "app-layout__header--ywueY",
-    header_sub: "erc-large-header"
-};
-
-function getClassElement(element) {
-    return document.getElementsByClassName(CLASS_NAMES[element])[0] ?? null;
+(() => {
+let scrolled = null;
+function updateScrollState() {
+    if (!document.body) return;
+    const nextScrolled = window.scrollY > 50;
+    if (scrolled === nextScrolled) return;
+    scrolled = nextScrolled;
+    document.body.classList.toggle("scrolled", scrolled);
 }
-
-window.addEventListener("scroll", () => {
-    if (window.scrollY > 50) {
-        document.body.classList.add("scrolled");
-    } else {
-        document.body.classList.remove("scrolled");
-    }
-});
+window.addEventListener("scroll", updateScrollState, { passive: true });
+updateScrollState();
 
 function initFeatures() {
     window.CRToolkit.AutoSkip.init();
@@ -33,23 +28,19 @@ function applyFeatures() {
 
 window.CRToolkit = window.CRToolkit || {};
 window.CRToolkit.currentUrl = location.href;
-window.CRToolkit.getClassElement = getClassElement;
-window.CRToolkit.HideHeader = window.CRToolkit.HideHeader || {};
-window.CRToolkit.PlayerResize = window.CRToolkit.PlayerResize || {};
 
-// Timeout to wait for cr to be fully loaded
-setTimeout(() => {
-    initFeatures();
-    applyFeatures();
-}, 1250);
+initFeatures();
 
-// Monitor url-changes
-new MutationObserver(() => {
+// Also handle route changes that do not immediately modify the DOM.
+function syncFeaturesRoute() {
     if (location.href !== window.CRToolkit.currentUrl) {
         window.CRToolkit.currentUrl = location.href;
         applyFeatures();
     }
-}).observe(document, {
+}
+window.addEventListener("popstate", syncFeaturesRoute);
+window.addEventListener("cr-toolkit-route-change", syncFeaturesRoute);
+new MutationObserver(syncFeaturesRoute).observe(document, {
     subtree: true,
     childList: true
 });
@@ -155,6 +146,4 @@ new MutationObserver(() => {
     window.setInterval(syncRoute, 60 * 1000);
 })();
 
-window.CRToolkit?.initPlayerResize?.();
-window.CRToolkit?.initAutoSkip?.();
-window.CRToolkit?.initBetterSearch?.();
+})();

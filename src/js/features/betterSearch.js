@@ -60,6 +60,9 @@
     let onlySub = false;
     let betterSearchEnabled = true;
     const searchCache = new Map();
+    const recordsById = new Map();
+    const recordsByTitle = new Map();
+    const MAX_CACHE_RECORDS = 500;
     let applyTimer = null;
     let initialized = false;
     let lastSearchQuery = "";
@@ -100,15 +103,19 @@
     }
 
     function saveFilters() {
-        localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify({
-                dub: dubFilter,
-                sub: subFilter,
-                onlyDub,
-                onlySub
-            })
-        );
+        try {
+            localStorage.setItem(
+                STORAGE_KEY,
+                JSON.stringify({
+                    dub: dubFilter,
+                    sub: subFilter,
+                    onlyDub,
+                    onlySub
+                })
+            );
+        } catch (error) {
+            // Filters still work when browser storage is unavailable or full.
+        }
     }
 
     function validLanguage(language) {
@@ -820,6 +827,8 @@
         settingsToggle = null;
         settingsBackdrop = null;
         document.documentElement.classList.remove("cr-better-search-wide");
+        document.removeEventListener("keydown", handleSettingsKeydown);
+        window.removeEventListener("resize", updateResponsiveLayout);
     }
 
     function handleSettingsKeydown(event) {
@@ -830,8 +839,12 @@
 
     function observePage() {
         const root = document.documentElement || document;
-        const observer = new MutationObserver(() => {
+        const observer = new MutationObserver(mutations => {
             syncSearchPage();
+            if (!betterSearchEnabled || !isSearchPage()) return;
+            if (mutations.every(mutation => mutation.target.closest?.(
+                '#cr-better-search, [data-cr-toolkit="availability-labels"]'
+            ))) return;
             syncSearchQuery();
             injectUI();
             scheduleApply();
@@ -1015,19 +1028,22 @@
             return null;
         }
 
-        const ids = uniqueValues(record.ids.map(value => String(value).toLowerCase()));
-        const titles = uniqueValues(record.titles.map(normalizeText));
+        const normalizeValues = (values, normalize) => uniqueValues(values
+            .filter(value => typeof value === "string" && value.length <= 300)
+            .map(normalize).filter(Boolean).slice(0, 100));
+        const ids = normalizeValues(record.ids, normalizeText);
+        const titles = normalizeValues(record.titles, normalizeText);
 
         if (!ids.length && !titles.length) {
             return null;
         }
 
         return {
-            cacheKey: record.cacheKey || ids[0] || `title:${titles[0]}`,
+            cacheKey: ids[0] || `title:${titles[0]}`,
             ids,
             titles,
-            audioLocales: uniqueValues(record.audioLocales.map(normalizeLocale)),
-            subtitleLocales: uniqueValues(record.subtitleLocales.map(normalizeLocale)),
+            audioLocales: normalizeValues(record.audioLocales, normalizeLocale),
+            subtitleLocales: normalizeValues(record.subtitleLocales, normalizeLocale),
             hasDub: record.hasDub === true || record.hasDub === false
                 ? record.hasDub
                 : null,
@@ -1047,12 +1063,14 @@
 
     function clearSearchCache() {
         searchCache.clear();
+        recordsById.clear();
+        recordsByTitle.clear();
     }
 
     function getActiveSearchQuery() {
-        const input = document.querySelector(
+        const input = Array.from(document.querySelectorAll(
             'input[type="search"], input[class*="search-input"]'
-        );
+        )).find(element => !element.closest("#cr-better-search"));
         const inputValue = input?.value?.trim();
 
         if (inputValue) {
@@ -1071,6 +1089,7 @@
     }
 
     function scheduleApply() {
+        if (!betterSearchEnabled || !isSearchPage()) return;
         if (applyTimer !== null) {
             return;
         }
@@ -1213,33 +1232,23 @@
     }
 
     function findRecordForCard(card) {
-        const cachedKey = card.dataset.crToolkitRecordKey;
-        const cachedRecord = cachedKey ? searchCache.get(cachedKey) : null;
-        if (cachedRecord) {
-            return cachedRecord;
-        }
-
+        // Re-read identity because the site can reuse a card for another result.
         const ids = getCardIds(card);
         if (ids.length) {
-            const record = [...searchCache.values()].find(item =>
-                ids.some(id => item.ids.includes(id))
-            );
+            const record = ids.map(id => recordsById.get(id)).find(Boolean);
             if (record) {
-                card.dataset.crToolkitRecordKey = record.cacheKey;
                 return record;
             }
         }
 
         const titles = getCardTitles(card);
-        const record = [...searchCache.values()].find(item =>
+        const exactRecord = titles.map(title => recordsByTitle.get(title)).find(Boolean);
+        if (exactRecord) return exactRecord;
+        const record = Array.from(searchCache.values()).find(item =>
             item.titles.some(recordTitle =>
                 titles.some(cardTitle => titlesMatch(recordTitle, cardTitle))
             )
         ) || null;
-
-        if (record) {
-            card.dataset.crToolkitRecordKey = record.cacheKey;
-        }
 
         return record;
     }
@@ -1450,10 +1459,8 @@
         return {
             audioLocales,
             subtitleLocales,
-            hasDub: recordHasDub ??
-                (audioLocales.length > 0),
-            hasSub: recordHasSub ??
-                (subtitleLocales.length > 0)
+            hasDub: recordHasDub ?? (audioLocales.length ? true : null),
+            hasSub: recordHasSub ?? (subtitleLocales.length ? true : null)
         };
     }
 
@@ -1471,11 +1478,16 @@
     }
 
     function getAvailabilityFromCard(card) {
-        const cardCopy = card.cloneNode(true);
-        cardCopy.querySelectorAll('[data-cr-toolkit]').forEach(element => {
-            element.remove();
+        const walker = document.createTreeWalker(card, NodeFilter.SHOW_TEXT, {
+            acceptNode(node) {
+                return node.parentElement?.closest('[data-cr-toolkit], script, style')
+                    ? NodeFilter.FILTER_REJECT
+                    : NodeFilter.FILTER_ACCEPT;
+            }
         });
-        const text = cardCopy.innerText || cardCopy.textContent || "";
+        const parts = [];
+        while (walker.nextNode()) parts.push(walker.currentNode.textContent);
+        const text = parts.join(" ");
         const hasKnownStatus = /Synchro|Dubbed|Dubbing|Untertitel|Subtitles|Subs/i.test(
             text
         );
@@ -1640,17 +1652,19 @@
             return;
         }
 
-        records.forEach(record => {
+        records.slice(-MAX_CACHE_RECORDS).forEach(record => {
             const normalized = normalizeCachedRecord(record);
             if (!normalized) {
                 return;
             }
 
-            const existing = [...searchCache.values()]
-                .find(candidate => recordsOverlap(candidate, normalized));
+            const existing = normalized.ids.map(id => recordsById.get(id)).find(Boolean) ||
+                normalized.titles.map(title => recordsByTitle.get(title)).find(Boolean);
 
             if (!existing) {
                 searchCache.set(normalized.cacheKey, normalized);
+                indexRecord(normalized);
+                trimSearchCache();
                 return;
             }
 
@@ -1664,7 +1678,26 @@
             );
             existing.hasDub = mergeAvailabilityFlag(existing.hasDub, normalized.hasDub);
             existing.hasSub = mergeAvailabilityFlag(existing.hasSub, normalized.hasSub);
+            indexRecord(existing);
         });
+    }
+
+    function indexRecord(record) {
+        record.ids.forEach(id => recordsById.set(id, record));
+        record.titles.forEach(title => recordsByTitle.set(title, record));
+    }
+
+    function trimSearchCache() {
+        while (searchCache.size > MAX_CACHE_RECORDS) {
+            const [key, record] = searchCache.entries().next().value;
+            searchCache.delete(key);
+            record.ids.forEach(id => {
+                if (recordsById.get(id) === record) recordsById.delete(id);
+            });
+            record.titles.forEach(title => {
+                if (recordsByTitle.get(title) === record) recordsByTitle.delete(title);
+            });
+        }
     }
 
     function getRecordKey(record) {
@@ -1681,11 +1714,6 @@
         }
 
         return null;
-    }
-
-    function recordsOverlap(left, right) {
-        return left.ids.some(id => right.ids.includes(id)) ||
-            left.titles.some(title => right.titles.includes(title));
     }
 
     function uniqueValues(values) {
@@ -1725,6 +1753,7 @@
 
     function getCandidateScore(items) {
         return items.reduce((score, item) => {
+            if (!item || typeof item !== "object") return score;
             let itemScore = 0;
 
             if (item.title || item.series_title || item.movie_title) {
@@ -1817,11 +1846,10 @@
         const wrappedFetch = function(input, init) {
             const request = getRequestDetails(input, init);
             const responsePromise = originalFetch.apply(this, arguments);
-            const requestQuery = getSearchQueryFromUrl(request.url) ||
-                getActiveSearchQuery();
 
             if (betterSearchEnabled && request.method === "GET" &&
                 isSearchApiRequest(request.url)) {
+                const requestQuery = getSearchQueryFromUrl(request.url) || getActiveSearchQuery();
                 responsePromise.then(response => {
                     response.clone().json()
                         .then(payload => handleSearchResponse(
@@ -1849,27 +1877,31 @@
         const originalSend = XHR.prototype.send;
 
         XHR.prototype.open = function(method, url) {
+            if (this.__crToolkitSearchListener) {
+                this.removeEventListener("load", this.__crToolkitSearchListener);
+                this.__crToolkitSearchListener = null;
+            }
             this.__crToolkitSearchMethod = method;
-            this.__crToolkitSearchUrl = url;
+            this.__crToolkitSearchUrl = String(url);
             return originalOpen.apply(this, arguments);
         };
 
         XHR.prototype.send = function() {
             const url = this.__crToolkitSearchUrl;
             const method = String(this.__crToolkitSearchMethod || "GET").toUpperCase();
-            const requestQuery = getSearchQueryFromUrl(url) || getActiveSearchQuery();
-
             if (betterSearchEnabled && method === "GET" && isSearchApiRequest(url)) {
-                this.addEventListener("load", () => {
+                const requestQuery = getSearchQueryFromUrl(url) || getActiveSearchQuery();
+                this.__crToolkitSearchListener = () => {
                     try {
                         handleSearchResponse(
-                            JSON.parse(this.responseText),
+                            this.responseType === "json" ? this.response : JSON.parse(this.responseText),
                             requestQuery
                         );
                     } catch (error) {
                         // The request may have a non-JSON response.
                     }
-                });
+                };
+                this.addEventListener("load", this.__crToolkitSearchListener, { once: true });
             }
 
             return originalSend.apply(this, arguments);
