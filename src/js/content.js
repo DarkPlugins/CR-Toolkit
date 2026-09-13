@@ -11,6 +11,7 @@ window.addEventListener("scroll", updateScrollState, { passive: true });
 updateScrollState();
 
 function initFeatures() {
+    window.CRToolkit.BetterCalender.init();
     window.CRToolkit.AutoSkip.init();
     window.CRToolkit.KeyboardSeek.init();
     window.CRToolkit.ChangeColors.init();
@@ -109,7 +110,10 @@ new MutationObserver(syncFeaturesRoute).observe(document, {
 
     function syncBetterSearchState() {
         try {
-            chrome.storage.sync.get(["enabled_better_search"], data => {
+            chrome.storage.sync.get(["enabled_better_search", "enabled_better_calender"], data => {
+                postBridgeMessage("CR_BETTER_CALENDER_ENABLED", {
+                    enabled: data.enabled_better_calender !== false
+                });
                 postBridgeMessage("CR_BETTER_SEARCH_ENABLED", {
                     enabled: data.enabled_better_search !== false
                 });
@@ -121,11 +125,13 @@ new MutationObserver(syncFeaturesRoute).observe(document, {
 
     try {
         chrome.storage.onChanged.addListener((changes, areaName) => {
-            if (areaName !== "sync" || !changes.enabled_better_search) {
+            if (areaName !== "sync") {
                 return;
             }
-
-            postBridgeMessage("CR_BETTER_SEARCH_ENABLED", {
+            if (changes.enabled_better_calender) postBridgeMessage("CR_BETTER_CALENDER_ENABLED", {
+                enabled: changes.enabled_better_calender.newValue !== false
+            });
+            if (changes.enabled_better_search) postBridgeMessage("CR_BETTER_SEARCH_ENABLED", {
                 enabled: changes.enabled_better_search.newValue !== false
             });
         });
@@ -134,7 +140,7 @@ new MutationObserver(syncFeaturesRoute).observe(document, {
     }
 
     function syncRoute() {
-        sendRouteState(/(^|\/)search(?:\/|$)/i.test(window.location.pathname));
+        sendRouteState(/(^|\/)(?:search|simulcastcalendar)(?:\/|$)/i.test(window.location.pathname));
     }
 
     window.addEventListener("popstate", syncRoute);

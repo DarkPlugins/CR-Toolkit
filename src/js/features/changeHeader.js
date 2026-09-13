@@ -1,13 +1,13 @@
 (() => {
     const SELECTORS = {
         logo: ".header-logo",
-        categories: ".header-menu",
-        news: ".erc-news-menu",
+        categories: '.header-menu, #header_menubar_beta li:has(a[href$="/videos/anime"])',
+        news: '.erc-news-menu, #header_menubar_beta li:has(a[href$="/news"])',
         new: '[data-t="header-menu-new"]',
         popular: '[data-t="header-menu-popular"]',
         simulcast: '[data-t="header-menu-simulcast"]',
-        games: '[data-t="header-menu-games"]',
-        store: '[data-t="header-menu-store"]'
+        games: '[data-t="header-menu-games"], #header_menubar_beta .games',
+        store: '[data-t="header-menu-store"], #header_menubar_beta .store'
     };
     const KEYS = ["enabled_change_header", ...Object.keys(SELECTORS).map(
         key => `enabled_change_header_${key}`

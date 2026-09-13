@@ -9,11 +9,15 @@ chrome.runtime.onInstalled.addListener(() => {
             "active_popup_section",
             "enabled_player_resize",
             "enabled_auto_skip",
+            "enabled_better_calender",
             "enabled_hide_header",
             "popup_accent_color"
         ],
         (data) => {
             const updates = {};
+            if (data.enabled_better_calender === undefined) {
+                updates.enabled_better_calender = true;
+            }
 
             if (data.enabled_player_resize === undefined) {
                 updates.enabled_player_resize = true;

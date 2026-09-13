@@ -20,7 +20,7 @@
   "content_scripts": [
     {
       "matches": ["*://www.crunchyroll.com/*"],
-      "js": ["src/js/features/betterSearch.js"],
+      "js": ["src/js/features/calendarData.js", "src/js/features/betterSearch.js"],
       "run_at": "document_start",
       "world": "MAIN"
     },
@@ -30,6 +30,7 @@
         "src/js/features/playerResize.js",
         "src/js/features/autoSkip.js",
         "src/js/features/keyboardSeek.js",
+        "src/js/features/betterCalender.js",
         "src/js/features/changeColors.js",
         "src/js/features/hideHeader.js",
         "src/js/features/changeHeader.js",

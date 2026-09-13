@@ -50,6 +50,7 @@ function initPopup(root = document) {
         player_resize: true,
         auto_skip: true,
         better_search: true,
+        better_calender: true,
         hide_header: false,
         change_header: false,
         change_header_logo: false,

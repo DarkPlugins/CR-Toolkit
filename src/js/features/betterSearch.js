@@ -70,6 +70,10 @@
     let settingsPanel = null;
     let settingsBackdrop = null;
     let settingsToggle = null;
+    let calendarQuery = "";
+    let betterCalenderEnabled = true;
+    const calendar = window.CRToolkit?.CalendarData;
+    const isCalendarPage = () => calendar?.isPath(window.location.pathname) === true;
 
     function initBetterSearch() {
         if (!initialized) {
@@ -129,6 +133,7 @@
         }
 
         if (document.querySelector("#cr-better-search")) {
+            updateCalendarUI();
             return true;
         }
 
@@ -206,12 +211,26 @@
             )
         );
 
+        const calendarSearch = document.createElement("input");
+        calendarSearch.id = "cr-calendar-search";
+        calendarSearch.type = "search";
+        calendarSearch.value = calendarQuery;
+        calendarSearch.className = "cr-better-search-language-input";
+        calendarSearch.placeholder = "Search this week";
+        calendarSearch.setAttribute("aria-label", "Search calendar titles");
+        calendarSearch.addEventListener("input", () => {
+            calendarQuery = normalizeText(calendarSearch.value);
+            scheduleApply();
+        });
+        description.after(calendarSearch);
+
         settingsBackdrop.addEventListener("click", closeSettingsModal);
         settingsToggle.addEventListener("click", openSettingsModal);
         document.addEventListener("keydown", handleSettingsKeydown);
         window.addEventListener("resize", updateResponsiveLayout);
 
         document.body.append(settingsBackdrop, settingsPanel, settingsToggle);
+        updateCalendarUI();
         setSettingsRouteVisibility(true);
         updateResponsiveLayout();
         return true;
@@ -794,7 +813,24 @@
     }
 
     function isWideLayout() {
-        return window.innerWidth >= 1100 && window.innerHeight >= 650;
+        if (window.innerWidth < 1100 || window.innerHeight < 650) return false;
+        // Keep the calendar centered. Only use its free left gutter for the sidebar.
+        if (isCalendarPage()) {
+            return (document.querySelector('.simulcast-calendar')?.getBoundingClientRect().left || 0) >= 328;
+        }
+        return true;
+    }
+
+    function updateCalendarUI() {
+        if (!settingsPanel) return;
+        const active = isCalendarPage();
+        settingsPanel.querySelector("#cr-calendar-search").hidden = !active;
+        const description = settingsPanel.querySelector(".cr-better-search-description");
+        const text = active
+            ? "Filter this week's releases."
+            : "Filter results by available audio and subtitle languages.";
+        if (description.textContent !== text) description.textContent = text;
+        updateResponsiveLayout();
     }
 
     function updateResponsiveLayout() {
@@ -914,6 +950,7 @@
         }
 
         const wasSearchPage = isSearchPath(searchPagePath);
+        if (calendar?.isPath(searchPagePath) && !isCalendarPage()) clearCalendarEffects();
         const isCurrentSearchPage = isSearchPath(currentPath);
         searchPagePath = currentPath;
         setSettingsRouteVisibility(isCurrentSearchPage);
@@ -973,6 +1010,19 @@
 
     function handleBridgeMessage(event) {
         if (event.source !== window || event.data?.source !== "CRToolkit") {
+            return;
+        }
+
+        if (event.data.type === "CR_BETTER_CALENDER_ENABLED") {
+            const enabled = event.data.enabled !== false;
+            if (enabled !== betterCalenderEnabled) {
+                betterCalenderEnabled = enabled;
+                if (isCalendarPage()) {
+                    clearCalendarEffects();
+                    removeSettingsUI();
+                    syncSearchPage(true);
+                }
+            }
             return;
         }
 
@@ -1066,7 +1116,8 @@
     }
 
     function isSearchPath(path) {
-        return /(^|\/)search(?:\/|$)/i.test(String(path || ""));
+        return /(^|\/)search(?:\/|$)/i.test(String(path || "")) ||
+            (betterCalenderEnabled && calendar?.isPath(path) === true);
     }
 
     function clearSearchCache() {
@@ -1113,6 +1164,11 @@
             return;
         }
 
+        if (isCalendarPage()) {
+            applyCalendarFilters();
+            return;
+        }
+
         const cards = getSearchCards();
 
         if (!cards.length) {
@@ -1136,11 +1192,59 @@
     }
 
     function clearBetterSearchEffects() {
+        clearCalendarEffects();
         getSearchCards().forEach(card => {
             card.style.display = "";
             card.querySelector('[data-cr-toolkit="availability-labels"]')?.remove();
             delete card.dataset.crToolkitRecordKey;
         });
+    }
+
+    function clearCalendarEffects() {
+        document.querySelectorAll('[data-cr-calendar-hidden]').forEach(card => card.removeAttribute('data-cr-calendar-hidden'));
+        document.querySelectorAll('.simulcast-calendar [data-cr-toolkit="availability-labels"]').forEach(label => label.remove());
+        document.getElementById("cr-calendar-filter-status")?.remove();
+    }
+
+    function applyCalendarFilters() {
+        const cards = Array.from(document.querySelectorAll('.simulcast-calendar .releases > li'));
+        let shown = 0;
+        cards.forEach(card => {
+            const release = card.querySelector('article.release');
+            if (!release) return;
+            const availability = calendar.getAvailability(release);
+            const title = normalizeText(release.querySelector('.season-name')?.textContent || "");
+            // Use the same region-specific match for filtering and availability labels.
+            const visible = title.includes(calendarQuery) &&
+                (!onlyDub || matchesCalendarType(availability.audioLocales, availability.hasDub, dubFilter) !== false) &&
+                (!onlySub || matchesCalendarType(availability.subtitleLocales, availability.hasSub, subFilter) !== false);
+            card.toggleAttribute('data-cr-calendar-hidden', !visible);
+            updateAvailabilityLabels(release, availability, getCalendarAvailabilityLabels(availability));
+            if (visible) shown++;
+        });
+        const header = document.querySelector('.simulcast-calendar-header');
+        if (!header) return;
+        let status = document.getElementById('cr-calendar-filter-status');
+        if (!status) {
+            status = document.createElement('p');
+            status.id = 'cr-calendar-filter-status';
+            status.setAttribute('role', 'status');
+            header.appendChild(status);
+        }
+        const message = cards.length
+            ? `${shown} / ${cards.length} releases${shown === 0 ? ' · No matching releases. Adjust Better Search filters.' : ''}`
+            : 'No releases in this calendar view.';
+        if (status.textContent !== message) status.textContent = message;
+    }
+
+    function matchesCalendarType(locales, hasType, selectedLanguage) {
+        if (!selectedLanguage) return hasType;
+        if (locales.some(locale => normalizeLocale(locale) === normalizeLocale(selectedLanguage))) return true;
+        return hasType === false || locales.length ? false : null;
+    }
+
+    function getCalendarAvailabilityLabels(availability) {
+        return getAvailabilityLabels(availability, matchesCalendarType);
     }
 
     function getSearchCards() {
@@ -1310,12 +1414,10 @@
         return shorter.length >= 8 && longer.startsWith(shorter);
     }
 
-    function updateAvailabilityLabels(card, availability) {
+    function updateAvailabilityLabels(card, availability, labels = getAvailabilityLabels(availability)) {
         let container = card.querySelector(
             '[data-cr-toolkit="availability-labels"]'
         );
-
-        const labels = getAvailabilityLabels(availability);
 
         if (!labels.length) {
             container?.remove();
@@ -1331,9 +1433,9 @@
             container.style.marginTop = "4px";
             container.style.width = "100%";
 
-            const footer = card.querySelector(
-                '[class*="search-show-card__footer"]'
-            );
+            const footer = card.querySelector(card.matches('.release')
+                ? '.availability'
+                : '[class*="search-show-card__footer"]');
             const body = card.querySelector('[class*="search-show-card__body"]');
 
             if (footer) {
@@ -1355,50 +1457,37 @@
         container.replaceChildren();
 
         labels.forEach(label => {
-            container.appendChild(createAvailabilityLabel(label.text, label.matches));
+            const element = createAvailabilityLabel(label.text, label.matches);
+            if (label.matches === null) element.style.color = label.color || "#58a6ff";
+            container.appendChild(element);
         });
     }
 
-    function getAvailabilityLabels(availability) {
-        const labels = [];
-
-        if (dubFilter) {
-            const matches = matchesType(
-                availability.audioLocales,
-                availability.hasDub,
-                dubFilter
-            );
-            if (matches !== null) {
-                labels.push({
-                    text: `${matches ? "Dubbed in" : "Not dubbed in"} ${LANGUAGES[dubFilter]}`,
-                    matches
-                });
-            } else if (availability.hasDub === true) {
-                labels.push({text: "Dubbed", matches: true});
+    function getAvailabilityLabels(availability, matchType = matchesType) {
+        return [
+            {locales: availability.audioLocales, hasType: availability.hasDub, language: dubFilter,
+                positive: "Dubbed in", negative: "Not dubbed in", absent: "Not dubbed",
+                unknown: "No dubbing information available"},
+            {locales: availability.subtitleLocales, hasType: availability.hasSub, language: subFilter,
+                positive: "Subtitles available in", negative: "No subtitles available in", absent: "No subtitles available",
+                unknown: "No subtitle information available"}
+        ].map(({locales, hasType, language, positive, negative, absent, unknown}) => {
+            if (language) {
+                const matches = matchType(locales, hasType, language);
+                if (matches !== null) {
+                    return {text: `${matches ? positive : negative} ${LANGUAGES[language]}`, matches};
+                }
+            } else if (locales.length) {
+                // With "All" selected, list the actual known languages instead of a generic badge.
+                const names = uniqueValues(locales.map(locale => Object.entries(LANGUAGES)
+                    .find(([code]) => normalizeLocale(code) === normalizeLocale(locale))?.[1] || locale));
+                return {text: `${positive} ${names.join(", ")}`, matches: true};
+            } else if (hasType === false) {
+                return {text: absent, matches: false};
             }
-        } else if (availability.hasDub === true) {
-            labels.push({text: "Dubbed", matches: true});
-        }
-
-        if (subFilter) {
-            const matches = matchesType(
-                availability.subtitleLocales,
-                availability.hasSub,
-                subFilter
-            );
-            if (matches !== null) {
-                labels.push({
-                    text: `${matches ? "Subbed in" : "Not subbed in"} ${LANGUAGES[subFilter]}`,
-                    matches
-                });
-            } else if (availability.hasSub === true) {
-                labels.push({text: "Subtitles", matches: true});
-            }
-        } else if (availability.hasSub === true) {
-            labels.push({text: "Subtitles", matches: true});
-        }
-
-        return labels;
+            // A generic dubbed/subbed flag does not establish any specific language.
+            return {text: unknown, matches: null, color: "#58a6ff"};
+        });
     }
 
     function createAvailabilityLabel(text, matches) {

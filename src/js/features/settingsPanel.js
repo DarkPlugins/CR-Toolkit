@@ -536,6 +536,11 @@
                             <input type="checkbox" id="toggle-better-search" aria-labelledby="toggle-better-search-text">
                             <label for="toggle-better-search" class="toggle-label"></label>
                         </div>
+                        <div class="feat-item">
+                            <span class="toggle-text" id="toggle-better-calender-text">Better Calender</span>
+                            <input type="checkbox" id="toggle-better-calender" aria-labelledby="toggle-better-calender-text">
+                            <label for="toggle-better-calender" class="toggle-label"></label>
+                        </div>
                     </div>
 
                     <div class="section-page" id="s-appearance">
@@ -614,7 +619,7 @@
                         <div class="feat-item">
                             <div>
                                 <div class="toggle-text">Accent color</div>
-                                <div class="setting-note">Changes the highlight color of this panel.</div>
+                                <div class="setting-note">Shared by this panel, Better Search and the calendar. Site color mappings take priority in the calendar.</div>
                             </div>
                             <div class="accent-actions">
                                 <input type="color" id="accent-color" value="#ff6f00" aria-label="Accent color">
@@ -632,7 +637,7 @@
     let observer = null;
 
     function getHeaderActions() {
-        return document.querySelector(".header-actions");
+        return document.querySelector(".header-actions, #header_userpanel_beta");
     }
 
     function closePanel() {
