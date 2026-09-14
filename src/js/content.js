@@ -140,7 +140,8 @@ new MutationObserver(syncFeaturesRoute).observe(document, {
     }
 
     function syncRoute() {
-        sendRouteState(/(^|\/)(?:search|simulcastcalendar)(?:\/|$)/i.test(window.location.pathname));
+        sendRouteState(/(^|\/)(?:search|simulcastcalendar)(?:\/|$)/i.test(window.location.pathname) ||
+            window.CRToolkit.BetterGeneres.isPath(window.location.pathname));
     }
 
     window.addEventListener("popstate", syncRoute);

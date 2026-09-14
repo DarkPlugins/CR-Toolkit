@@ -20,13 +20,14 @@
   "content_scripts": [
     {
       "matches": ["*://www.crunchyroll.com/*"],
-      "js": ["src/js/features/calendarData.js", "src/js/features/betterSearch.js"],
+      "js": ["src/js/features/calendarData.js", "src/js/features/betterGeneres.js", "src/js/features/betterSearch.js"],
       "run_at": "document_start",
       "world": "MAIN"
     },
     {
       "matches": ["*://www.crunchyroll.com/*"],
       "js": [
+        "src/js/features/betterGeneres.js",
         "src/js/features/playerResize.js",
         "src/js/features/autoSkip.js",
         "src/js/features/keyboardSeek.js",

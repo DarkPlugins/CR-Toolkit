@@ -62,6 +62,7 @@
     const searchCache = new Map();
     const recordsById = new Map();
     const recordsByTitle = new Map();
+    const decoratedCards = new Map();
     const MAX_CACHE_RECORDS = 500;
     let applyTimer = null;
     let initialized = false;
@@ -73,7 +74,9 @@
     let calendarQuery = "";
     let betterCalenderEnabled = true;
     const calendar = window.CRToolkit?.CalendarData;
+    const generes = window.CRToolkit?.BetterGeneres;
     const isCalendarPage = () => calendar?.isPath(window.location.pathname) === true;
+    const isGeneresPage = () => generes?.isPath(window.location.pathname) === true;
 
     function initBetterSearch() {
         if (!initialized) {
@@ -372,6 +375,8 @@
         const style = document.createElement("style");
         style.id = "cr-better-search-styles";
         style.textContent = `
+            [data-cr-search-hidden] { display: none !important; }
+
             :root {
                 --cr-toolkit-accent: #ff6f00;
                 --cr-toolkit-accent-border: rgba(255, 111, 0, 0.8);
@@ -818,6 +823,7 @@
         if (isCalendarPage()) {
             return (document.querySelector('.simulcast-calendar')?.getBoundingClientRect().left || 0) >= 328;
         }
+        if (isGeneresPage()) return generes.hasSidebarSpace();
         return true;
     }
 
@@ -950,7 +956,7 @@
         }
 
         const wasSearchPage = isSearchPath(searchPagePath);
-        if (calendar?.isPath(searchPagePath) && !isCalendarPage()) clearCalendarEffects();
+        if (currentPath !== searchPagePath) clearBetterSearchEffects();
         const isCurrentSearchPage = isSearchPath(currentPath);
         searchPagePath = currentPath;
         setSettingsRouteVisibility(isCurrentSearchPage);
@@ -1117,6 +1123,7 @@
 
     function isSearchPath(path) {
         return /(^|\/)search(?:\/|$)/i.test(String(path || "")) ||
+            generes?.isPath(path) === true ||
             (betterCalenderEnabled && calendar?.isPath(path) === true);
     }
 
@@ -1127,6 +1134,7 @@
     }
 
     function getActiveSearchQuery() {
+        if (isGeneresPage()) return "";
         const input = Array.from(document.querySelectorAll(
             'input[type="search"], input[class*="search-input"]'
         )).find(element => !element.closest("#cr-better-search"));
@@ -1170,6 +1178,12 @@
         }
 
         const cards = getSearchCards();
+        for (const [card, target] of decoratedCards) {
+            if (!card.isConnected) {
+                target.removeAttribute("data-cr-search-hidden");
+                decoratedCards.delete(card);
+            }
+        }
 
         if (!cards.length) {
             return;
@@ -1177,27 +1191,29 @@
 
         cards.forEach(card => {
             const record = findRecordForCard(card);
-            const recordAvailability = record
-                ? getAvailability(record)
-                : null;
             const cardAvailability = getAvailabilityFromCard(card);
+            // Cached records already contain normalized availability, shared by duplicate cards.
             const availability = record
-                ? mergeAvailability(recordAvailability, cardAvailability)
+                ? mergeAvailability(record, cardAvailability)
                 : cardAvailability;
             const matches = !record || matchesActiveFilters(availability);
 
-            card.style.display = matches ? "" : "none";
+            const target = isGeneresPage() ? generes.getVisibilityTarget(card) : card;
+            target.toggleAttribute("data-cr-search-hidden", !matches);
+            decoratedCards.set(card, target);
             updateAvailabilityLabels(card, availability);
         });
     }
 
     function clearBetterSearchEffects() {
         clearCalendarEffects();
-        getSearchCards().forEach(card => {
-            card.style.display = "";
+        document.querySelectorAll('[data-cr-search-hidden]').forEach(card => card.removeAttribute('data-cr-search-hidden'));
+        decoratedCards.forEach((target, card) => {
+            target.removeAttribute("data-cr-search-hidden");
             card.querySelector('[data-cr-toolkit="availability-labels"]')?.remove();
             delete card.dataset.crToolkitRecordKey;
         });
+        decoratedCards.clear();
     }
 
     function clearCalendarEffects() {
@@ -1248,6 +1264,7 @@
     }
 
     function getSearchCards() {
+        if (isGeneresPage()) return generes.getCards();
         const cards = new Set();
         const exactCards = Array.from(
             document.querySelectorAll(EXACT_CARD_SELECTOR)
@@ -1435,8 +1452,8 @@
 
             const footer = card.querySelector(card.matches('.release')
                 ? '.availability'
-                : '[class*="search-show-card__footer"]');
-            const body = card.querySelector('[class*="search-show-card__body"]');
+                : '[class*="search-show-card__footer"], [class*="browse-card__footer"]');
+            const body = card.querySelector('[class*="search-show-card__body"], [class*="browse-card__body"]');
 
             if (footer) {
                 footer.insertAdjacentElement("afterend", container);
@@ -1713,8 +1730,8 @@
             .replace(/\s+/g, " ");
     }
 
-    function handleSearchResponse(payload, requestQuery = "") {
-        if (!betterSearchEnabled || !isSearchPage()) {
+    function handleSearchResponse(payload, requestQuery = "", requestPath = window.location.pathname) {
+        if (!betterSearchEnabled || !isSearchPage() || requestPath !== window.location.pathname) {
             return;
         }
 
@@ -1922,15 +1939,18 @@
         };
     }
 
-    function isSearchApiRequest(url) {
-        return typeof url === "string" && url.includes(SEARCH_API_PATH);
-    }
-
-    function getSearchQueryFromUrl(url) {
+    function getResultRequest(url) {
         try {
-            return new URL(url, window.location.href).searchParams.get("q") || "";
+            const parsed = new URL(url, window.location.href);
+            const isSearch = parsed.pathname === SEARCH_API_PATH;
+            const isBrowse = isGeneresPage() && generes.isApiPath(parsed.pathname);
+            if (!isSearch && !isBrowse) return null;
+            return {
+                path: window.location.pathname,
+                query: isSearch ? parsed.searchParams.get("q") || getActiveSearchQuery() : ""
+            };
         } catch (error) {
-            return "";
+            return null;
         }
     }
 
@@ -1942,16 +1962,17 @@
         const originalFetch = window.fetch;
         const wrappedFetch = function(input, init) {
             const request = getRequestDetails(input, init);
+            const resultRequest = betterSearchEnabled && request.method === "GET"
+                ? getResultRequest(request.url) : null;
             const responsePromise = originalFetch.apply(this, arguments);
 
-            if (betterSearchEnabled && request.method === "GET" &&
-                isSearchApiRequest(request.url)) {
-                const requestQuery = getSearchQueryFromUrl(request.url) || getActiveSearchQuery();
+            if (resultRequest) {
                 responsePromise.then(response => {
                     response.clone().json()
                         .then(payload => handleSearchResponse(
                             payload,
-                            requestQuery
+                            resultRequest.query,
+                            resultRequest.path
                         ))
                         .catch(() => {});
                 }).catch(() => {});
@@ -1986,13 +2007,14 @@
         XHR.prototype.send = function() {
             const url = this.__crToolkitSearchUrl;
             const method = String(this.__crToolkitSearchMethod || "GET").toUpperCase();
-            if (betterSearchEnabled && method === "GET" && isSearchApiRequest(url)) {
-                const requestQuery = getSearchQueryFromUrl(url) || getActiveSearchQuery();
+            const resultRequest = betterSearchEnabled && method === "GET" ? getResultRequest(url) : null;
+            if (resultRequest) {
                 this.__crToolkitSearchListener = () => {
                     try {
                         handleSearchResponse(
                             this.responseType === "json" ? this.response : JSON.parse(this.responseText),
-                            requestQuery
+                            resultRequest.query,
+                            resultRequest.path
                         );
                     } catch (error) {
                         // The request may have a non-JSON response.

@@ -10,6 +10,10 @@ CR-Toolkit is a browser extension for Crunchyroll that offers various features t
 Filter Crunchyroll search results by available audio and subtitle languages.
 Better Search has its own settings panel on the search page, with settings to filter for audio- and subtitle-languages.
 
+### Better Generes
+Use Better Search's audio and subtitle filters on genre pages and video listings, including carousels.
+Shares the same settings and Better Search toggle.
+
 ### Resizable Cinema Mode
 Expand the video player into a cinema-style layout without entering fullscreen mode. This allows you to continue accessing browser tabs, extensions, and other controls while watching.
 
