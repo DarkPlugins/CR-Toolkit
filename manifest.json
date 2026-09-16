@@ -8,8 +8,12 @@
     "48": "icon.png",
     "128": "icon.png"
   },
-  "permissions": ["storage"],
-  "host_permissions": ["*://www.crunchyroll.com/*"],
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "*://www.crunchyroll.com/*"
+  ],
   "action": {
     "default_popup": "popup.html",
     "default_icon": "icon.png"
@@ -19,14 +23,26 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://www.crunchyroll.com/*"],
-      "js": ["src/js/features/calendarData.js", "src/js/features/betterGeneres.js", "src/js/features/betterSearch.js"],
+      "matches": [
+        "*://www.crunchyroll.com/*"
+      ],
+      "js": [
+        "src/js/messages.js",
+        "src/js/i18n.js",
+        "src/js/features/calendarData.js",
+        "src/js/features/betterGeneres.js",
+        "src/js/features/betterSearch.js"
+      ],
       "run_at": "document_start",
       "world": "MAIN"
     },
     {
-      "matches": ["*://www.crunchyroll.com/*"],
+      "matches": [
+        "*://www.crunchyroll.com/*"
+      ],
       "js": [
+        "src/js/messages.js",
+        "src/js/i18n.js",
         "src/js/features/betterGeneres.js",
         "src/js/features/playerResize.js",
         "src/js/features/autoSkip.js",
@@ -37,15 +53,20 @@
         "src/js/features/changeHeader.js",
         "popup.js",
         "src/js/features/settingsPanel.js",
-        "src/js/content.js"
+        "src/js/content.js",
+        "src/js/localeSync.js"
       ],
       "run_at": "document_idle"
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["icon.png"],
-      "matches": ["*://www.crunchyroll.com/*"]
+      "resources": [
+        "icon.png"
+      ],
+      "matches": [
+        "*://www.crunchyroll.com/*"
+      ]
     }
   ]
 }

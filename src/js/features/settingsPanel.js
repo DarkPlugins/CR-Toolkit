@@ -5,6 +5,8 @@
         ? chrome.runtime.getURL("icon.png")
         : "icon.png";
 
+    const i18n = window.CRToolkit.I18n;
+
     const PANEL_CSS = `
         :host {
             all: initial;
@@ -537,6 +539,30 @@
             fill: currentColor;
         }
 
+        .language-setting { gap: 12px; cursor: default; }
+        #display-language {
+            min-width: 0; max-width: 68%; padding: 7px 9px;
+            border: 1px solid var(--panel-border); border-radius: 8px;
+            background: var(--panel-soft); color: var(--panel-muted);
+            opacity: 0.65; font-size: 11px; pointer-events: none;
+        }
+        .language-tooltip {
+            position: absolute; z-index: 2; top: calc(100% + 5px);
+            inset-inline: 0; padding: 10px 12px; border: 1px solid var(--panel-border-strong);
+            border-radius: 9px; background: #20232a; color: var(--panel-text);
+            font-size: 11px; font-weight: 400; line-height: 1.5;
+            visibility: hidden; pointer-events: none;
+        }
+        .language-setting:hover .language-tooltip,
+        .language-setting:focus-visible .language-tooltip { visibility: visible; }
+        .language-setting:focus-visible { outline: 2px solid var(--accent-strong); outline-offset: 2px; }
+        .toggle-text { line-height: 1.4; }
+        .feat-item { gap: 8px; }
+        .feat-item.child { margin-left: 0; margin-inline-start: 12px; }
+        .feat-item.child::before { margin-right: 0; margin-inline-end: 9px; flex-shrink: 0; }
+        #s-options .feat-item > div:first-child { padding-right: 0; padding-inline-end: 14px; }
+        .cr-toolkit-settings[dir="rtl"] .close-button { right: auto; left: 0; }
+
         @keyframes panel-in {
             from { opacity: 0; transform: translateY(-5px) scale(0.985); }
             to { opacity: 1; transform: translateY(0) scale(1); }
@@ -551,50 +577,50 @@
     `;
 
     const PANEL_MARKUP = `
-        <button class="control-button" type="button" aria-label="Open CR Toolkit settings" aria-expanded="false" title="CR Toolkit settings">
+        <button class="control-button" type="button" aria-label="Settings" data-i18n-aria-label="Settings" aria-expanded="false" title="Settings" data-i18n-title="Settings">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
                 <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
                 <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/>
             </svg>
         </button>
 
-        <div class="panel" role="dialog" aria-label="CR Toolkit settings" aria-hidden="true">
+        <div class="panel" role="dialog" aria-label="Settings" data-i18n-aria-label="Settings" aria-hidden="true">
             <div class="panel-inner">
                 <div class="panel-header">
                     <img class="panel-logo" src="${LOGO_URL}" alt="CR Toolkit">
-                    <button class="close-button" type="button" aria-label="Close settings">×</button>
+                    <button class="close-button" type="button" aria-label="Close settings" data-i18n-aria-label="Close settings">×</button>
                 </div>
 
                 <div class="navbar">
-                    <button class="nav-btn" data-section="s-general" type="button">General</button>
-                    <button class="nav-btn" data-section="s-appearance" type="button">Appearance</button>
-                    <button class="nav-btn" data-section="s-options" type="button">Options</button>
+                    <button class="nav-btn" data-section="s-general" type="button" data-i18n="General">General</button>
+                    <button class="nav-btn" data-section="s-appearance" type="button" data-i18n="Appearance">Appearance</button>
+                    <button class="nav-btn" data-section="s-options" type="button" data-i18n="Options">Options</button>
                 </div>
 
                 <div class="section-container">
                     <div class="section-page" id="s-general">
                         <div class="feat-item">
-                            <span class="toggle-text" id="toggle-player-resize-text">Player Resize</span>
+                            <span class="toggle-text" id="toggle-player-resize-text" data-i18n="Player Resize">Player Resize</span>
                             <input type="checkbox" id="toggle-player-resize" aria-labelledby="toggle-player-resize-text">
                             <label for="toggle-player-resize" class="toggle-label"></label>
                         </div>
                         <div class="feat-item">
-                            <span class="toggle-text" id="toggle-auto-skip-text">Auto Skip OP/ED</span>
+                            <span class="toggle-text" id="toggle-auto-skip-text" data-i18n="Auto Skip OP/ED">Auto Skip OP/ED</span>
                             <input type="checkbox" id="toggle-auto-skip" aria-labelledby="toggle-auto-skip-text">
                             <label for="toggle-auto-skip" class="toggle-label"></label>
                         </div>
                         <div class="feat-item">
-                            <span class="toggle-text" id="toggle-better-search-text">Better Search</span>
+                            <span class="toggle-text" id="toggle-better-search-text" data-i18n="Better Search">Better Search</span>
                             <input type="checkbox" id="toggle-better-search" aria-labelledby="toggle-better-search-text">
                             <label for="toggle-better-search" class="toggle-label"></label>
                         </div>
                         <div class="feat-item child">
-                            <span class="toggle-text" id="toggle-better-search-icons-text">Use Icons instead</span>
+                            <span class="toggle-text" id="toggle-better-search-icons-text" data-i18n="Use Icons instead">Use Icons instead</span>
                             <input type="checkbox" id="toggle-better-search-icons" aria-labelledby="toggle-better-search-icons-text" disabled>
                             <label for="toggle-better-search-icons" class="toggle-label"></label>
                         </div>
                         <div class="feat-item">
-                            <span class="toggle-text" id="toggle-better-calender-text">Better Calender</span>
+                            <span class="toggle-text" id="toggle-better-calender-text" data-i18n="Better Calender">Better Calender</span>
                             <input type="checkbox" id="toggle-better-calender" aria-labelledby="toggle-better-calender-text">
                             <label for="toggle-better-calender" class="toggle-label"></label>
                         </div>
@@ -603,99 +629,104 @@
                     <div class="section-page" id="s-appearance">
                         <div class="feat-item color-feature">
                             <div class="feat-head-multi">
-                                <span class="toggle-text">Colors</span>
+                                <span class="toggle-text" data-i18n="Colors">Colors</span>
                                 <div class="color-actions">
-                                    <button id="btn-add-page-colors" type="button" title="Add all colors from the current Crunchyroll page" aria-label="Add all colors from the current Crunchyroll page">
+                                    <button id="btn-add-page-colors" type="button" title="Add all colors from the current Crunchyroll page" data-i18n-title="Add all colors from the current Crunchyroll page" aria-label="Add all colors from the current Crunchyroll page" data-i18n-aria-label="Add all colors from the current Crunchyroll page">
                                         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v12m0 0 5-5m-5 5-5-5M5 21h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
                                     </button>
-                                    <button id="btn-add-color" type="button" title="Add a color" aria-label="Add a color">+</button>
+                                    <button id="btn-add-color" type="button" title="Add a color" data-i18n-title="Add a color" aria-label="Add a color" data-i18n-aria-label="Add a color">+</button>
                                 </div>
                             </div>
                             <div class="color-sort">
-                                <label for="color-sort">Sort by</label>
+                                <label for="color-sort" data-i18n="Sort by">Sort by</label>
                                 <select id="color-sort">
-                                    <option value="added">Added</option>
-                                    <option value="color">Color</option>
+                                    <option value="added" data-i18n="Added">Added</option>
+                                    <option value="color" data-i18n="Color">Color</option>
                                 </select>
                             </div>
-                            <div class="list" id="list-colors"><span class="small">Add the colors you want to change</span></div>
+                            <div class="list" id="list-colors"><span class="small" data-i18n="Add the colors you want to change">Add the colors you want to change</span></div>
                         </div>
                         <div class="feat-item">
-                            <span class="toggle-text" id="toggle-hide-header-text">Hide Header on Playback</span>
+                            <span class="toggle-text" id="toggle-hide-header-text" data-i18n="Hide Header on Playback">Hide Header on Playback</span>
                             <input type="checkbox" id="toggle-hide-header" aria-labelledby="toggle-hide-header-text">
                             <label for="toggle-hide-header" class="toggle-label"></label>
                         </div>
                         <div class="feat-item">
-                            <span class="toggle-text" id="toggle-change-header-text">Change Header</span>
+                            <span class="toggle-text" id="toggle-change-header-text" data-i18n="Change Header">Change Header</span>
                             <input type="checkbox" id="toggle-change-header" aria-labelledby="toggle-change-header-text">
                             <label for="toggle-change-header" class="toggle-label"></label>
                         </div>
                         <div class="feat-item child">
-                            <span class="toggle-text" id="toggle-change-header-logo-text">Remove: Logo</span>
+                            <span class="toggle-text" id="toggle-change-header-logo-text" data-i18n="Remove: Logo">Remove: Logo</span>
                             <input type="checkbox" id="toggle-change-header-logo" aria-labelledby="toggle-change-header-logo-text">
                             <label for="toggle-change-header-logo" class="toggle-label"></label>
                         </div>
                         <div class="feat-item child">
-                            <span class="toggle-text" id="toggle-change-header-new-text">Remove: New</span>
+                            <span class="toggle-text" id="toggle-change-header-new-text" data-i18n="Remove: New">Remove: New</span>
                             <input type="checkbox" id="toggle-change-header-new" aria-labelledby="toggle-change-header-new-text">
                             <label for="toggle-change-header-new" class="toggle-label"></label>
                         </div>
                         <div class="feat-item child">
-                            <span class="toggle-text" id="toggle-change-header-popular-text">Remove: Popular</span>
+                            <span class="toggle-text" id="toggle-change-header-popular-text" data-i18n="Remove: Popular">Remove: Popular</span>
                             <input type="checkbox" id="toggle-change-header-popular" aria-labelledby="toggle-change-header-popular-text">
                             <label for="toggle-change-header-popular" class="toggle-label"></label>
                         </div>
                         <div class="feat-item child">
-                            <span class="toggle-text" id="toggle-change-header-simulcast-text">Remove: Simulcast</span>
+                            <span class="toggle-text" id="toggle-change-header-simulcast-text" data-i18n="Remove: Simulcast">Remove: Simulcast</span>
                             <input type="checkbox" id="toggle-change-header-simulcast" aria-labelledby="toggle-change-header-simulcast-text">
                             <label for="toggle-change-header-simulcast" class="toggle-label"></label>
                         </div>
                         <div class="feat-item child">
-                            <span class="toggle-text" id="toggle-change-header-categories-text">Remove: Categories</span>
+                            <span class="toggle-text" id="toggle-change-header-categories-text" data-i18n="Remove: Categories">Remove: Categories</span>
                             <input type="checkbox" id="toggle-change-header-categories" aria-labelledby="toggle-change-header-categories-text">
                             <label for="toggle-change-header-categories" class="toggle-label"></label>
                         </div>
                         <div class="feat-item child">
-                            <span class="toggle-text" id="toggle-change-header-games-text">Remove: Games</span>
+                            <span class="toggle-text" id="toggle-change-header-games-text" data-i18n="Remove: Games">Remove: Games</span>
                             <input type="checkbox" id="toggle-change-header-games" aria-labelledby="toggle-change-header-games-text">
                             <label for="toggle-change-header-games" class="toggle-label"></label>
                         </div>
                         <div class="feat-item child">
-                            <span class="toggle-text" id="toggle-change-header-store-text">Remove: Store</span>
+                            <span class="toggle-text" id="toggle-change-header-store-text" data-i18n="Remove: Store">Remove: Store</span>
                             <input type="checkbox" id="toggle-change-header-store" aria-labelledby="toggle-change-header-store-text">
                             <label for="toggle-change-header-store" class="toggle-label"></label>
                         </div>
                         <div class="feat-item child">
-                            <span class="toggle-text" id="toggle-change-header-news-text">Remove: News</span>
+                            <span class="toggle-text" id="toggle-change-header-news-text" data-i18n="Remove: News">Remove: News</span>
                             <input type="checkbox" id="toggle-change-header-news" aria-labelledby="toggle-change-header-news-text">
                             <label for="toggle-change-header-news" class="toggle-label"></label>
                         </div>
                     </div>
 
                     <div class="section-page" id="s-options">
+                        <div class="feat-item language-setting" tabindex="0" aria-describedby="language-sync-note">
+                            <label class="toggle-text" for="display-language" data-i18n="Language">Language</label>
+                            <select id="display-language" disabled aria-describedby="language-sync-note"></select>
+                            <span class="language-tooltip" id="language-sync-note" role="tooltip" data-i18n="Synced with Crunchyroll’s display language. Change it in your Crunchyroll account preferences."></span>
+                        </div>
                         <div class="feat-item">
                             <div>
-                                <div class="toggle-text">Accent color</div>
-                                <div class="setting-note">Shared by this panel, Better Search and the calendar. Site color mappings take priority in the calendar.</div>
+                                <div class="toggle-text" data-i18n="Accent color">Accent color</div>
+                                <div class="setting-note" data-i18n="Shared by this panel, Better Search and the calendar. Site color mappings take priority in the calendar.">Shared by this panel, Better Search and the calendar. Site color mappings take priority in the calendar.</div>
                             </div>
                             <div class="accent-actions">
-                                <input type="color" id="accent-color" value="#ff6f00" aria-label="Accent color">
-                                <button class="reset-button" id="reset-accent-color" type="button">Reset</button>
+                                <input type="color" id="accent-color" value="#ff6f00" aria-label="Accent color" data-i18n-aria-label="Accent color">
+                                <button class="reset-button" id="reset-accent-color" type="button" data-i18n="Reset">Reset</button>
                             </div>
                         </div>
                         <footer class="panel-footer">
-                            <a class="support-link" href="https://github.com/DarkPlugins/CR-Toolkit/issues" target="_blank" rel="noopener noreferrer" title="Report a bug on GitHub">
+                            <a class="support-link" href="https://github.com/DarkPlugins/CR-Toolkit/issues" target="_blank" rel="noopener noreferrer" title="Bug reports" data-i18n-title="Bug reports">
                                 <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
                                     <path d="M7 0V1.60002C7.32311 1.53443 7.65753 1.5 8 1.5C8.34247 1.5 8.67689 1.53443 9 1.60002V0H11V2.49963C11.8265 3.12041 12.4543 3.99134 12.7711 5H3.2289C3.5457 3.99134 4.17354 3.12041 5 2.49963V0H7Z"/>
                                     <path d="M0 7V9H3V10.4957L0.225279 11.2885L0.774721 13.2115L3.23189 12.5095C3.87194 14.5331 5.76467 16 8 16C10.2353 16 12.1281 14.5331 12.7681 12.5095L15.2253 13.2115L15.7747 11.2885L13 10.4957V9H16V7H9V12H7V7H0Z"/>
                                 </svg>
-                                <span>Bug reports</span>
+                                <span data-i18n="Bug reports">Bug reports</span>
                             </a>
-                            <a class="support-link" href="https://github.com/DarkPlugins/CR-Toolkit/discussions/new/choose" target="_blank" rel="noopener noreferrer" title="Share feedback on GitHub">
+                            <a class="support-link" href="https://github.com/DarkPlugins/CR-Toolkit/discussions/new/choose" target="_blank" rel="noopener noreferrer" title="Feedback" data-i18n-title="Feedback">
                                 <svg viewBox="0 0 128 128" aria-hidden="true" focusable="false">
                                     <path d="M86.5,114.1c-0.5,2.9-3,4.9-5.9,4.9H34v8h46.6c6.8,0,12.6-4.9,13.8-11.5l6.4-36c0.7-4.1-0.4-8.3-3-11.4 c-2.7-3.2-6.6-5-10.7-5H71.2c1.2-3.7,2.8-9.1,4.1-16.2l0.6-4.2c0.9-6.6-3.7-12.6-10.2-13.5c-3.2-0.4-6.3,0.4-8.9,2.3 c-2.6,1.9-4.2,4.8-4.7,7.9l-0.6,4c-0.1,0.5-0.2,1-0.2,1.5c-0.1,0.5-0.2,1-0.3,1.5C47.9,61,36.3,72.8,21.3,76.6L16,77.9V127h8V84.1 c17.5-4.7,31.2-18.7,34.9-36c0.1-0.6,0.2-1.2,0.4-1.8c0.1-0.6,0.2-1.2,0.3-1.8l0.6-4c0.1-1.1,0.7-2,1.6-2.6c0.9-0.6,1.9-0.9,3-0.8 c2.2,0.3,3.7,2.3,3.4,4.5l-0.5,3.9c-2.1,11.6-5,18.3-5.5,19.6l-0.3,0.8l0,5.2h25.5c1.8,0,3.5,0.8,4.6,2.1c1.1,1.4,1.6,3.2,1.3,4.9 L86.5,114.1z"/>
                                 </svg>
-                                <span>Feedback</span>
+                                <span data-i18n="Feedback">Feedback</span>
                             </a>
                         </footer>
                     </div>
@@ -731,6 +762,20 @@
         button.setAttribute("aria-expanded", String(open));
     }
 
+    function localizePanel() {
+        if (!shadow) return;
+        i18n.apply(shadow);
+        const root = shadow.querySelector('.cr-toolkit-settings');
+        root.lang = i18n.locale;
+        root.dir = i18n.direction;
+        const select = shadow.querySelector('#display-language');
+        const option = document.createElement('option');
+        option.value = i18n.locale;
+        option.textContent = i18n.locales[i18n.locale];
+        select.replaceChildren(option);
+    }
+    i18n.subscribe(localizePanel);
+
     function createControl() {
         control = document.createElement("div");
         control.className = "nav-horizontal-layout__action-item--KZBne";
@@ -749,6 +794,7 @@
         });
         shadow.querySelector(".close-button").addEventListener("click", closePanel);
         window.CRToolkit.Popup.init(shadow);
+        localizePanel();
     }
 
     function ensureControl() {

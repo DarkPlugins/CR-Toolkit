@@ -58,6 +58,12 @@ After installation, simply open Crunchyroll. The extension will automatically ap
 Click the gear to open the glass-style settings panel directly on the Crunchyroll page. The panel contains General, Appearance, and Options sections. The Accent color option is shared with Better Search, including its settings, selectors, focus states, and checkboxes. The default and reset color is `#ff6f00`.
 The extension icon opens a small info card with a link to the project repository.
 
+### Display language
+
+The toolkit follows Crunchyroll's display language automatically, independently of audio and subtitle preferences. Change the display language in your Crunchyroll account preferences. **Options → Language** shows the current language in a disabled selector; hover or focus the row for an explanation.
+
+All toolkit controls, search filters, calendar availability messages, color dialogs and accessibility labels are translated into Crunchyroll's 16 display-language variants: English (US), Indonesian, German, Spanish (Latin America and Spain), French, Italian, Portuguese (Brazil and Portugal), Russian, Arabic, Hindi, Korean, Polish, Thai and Traditional Chinese. Arabic uses right-to-left layout. Language names in search filters are localized with `Intl.DisplayNames`.
+
 ## Disclaimer
 
 CR-Toolkit is an independent project and is not affiliated with, endorsed by, sponsored by, or associated with Crunchyroll, LLC.

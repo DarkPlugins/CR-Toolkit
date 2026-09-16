@@ -4,6 +4,33 @@
     }
 
     window.__CRToolkitBetterSearchInstalled = true;
+    const i18n = window.CRToolkit.I18n;
+    const t = i18n.t;
+    function translate(element, key, attribute) {
+        element.setAttribute(attribute ? `data-i18n-${attribute}` : 'data-i18n', key);
+        if (attribute) element.setAttribute(attribute, t(key));
+        else element.textContent = t(key);
+    }
+
+    function localizeSearch() {
+        if (settingsPanel) {
+            settingsPanel.lang = i18n.locale;
+            settingsPanel.dir = i18n.direction;
+            i18n.apply(settingsPanel);
+            settingsPanel.querySelectorAll('.cr-better-search-language-picker').forEach(picker => {
+                picker.querySelector('input').value = i18n.languageName(picker.dataset.value);
+                picker.querySelector('[role="listbox"]').hidden = true;
+            });
+            updateCalendarUI();
+        }
+        if (settingsToggle) {
+            settingsToggle.setAttribute('aria-label', t('Settings'));
+            settingsToggle.title = t('Settings');
+        }
+        hideAvailabilityTooltip();
+        scheduleApply();
+    }
+    i18n.subscribe(localizeSearch);
 
     // Paths from the supplied audio.svg, subtitles.svg and no_data_provided.svg; colors inherit the status.
     const AVAILABILITY_ICONS = {"audio":{"viewBox":"0 0 24 24","fill":"none","paths":[{"d":"M19 10V12C19 15.866 15.866 19 12 19M5 10V12C5 15.866 8.13401 19 12 19M12 19V22M8 22H16M12 15C10.3431 15 9 13.6569 9 12V5C9 3.34315 10.3431 2 12 2C13.6569 2 15 3.34315 15 5V12C15 13.6569 13.6569 15 12 15Z","stroke":"currentColor","stroke-width":"2","stroke-linecap":"round","stroke-linejoin":"round"}]},"subtitles":{"viewBox":"0 0 24 24","fill":"none","paths":[{"d":"M9 22H15C20 22 22 20 22 15V9C22 4 20 2 15 2H9C4 2 2 4 2 9V15C2 20 4 22 9 22Z","stroke":"currentColor","stroke-width":"1.5","stroke-linecap":"round","stroke-linejoin":"round"},{"d":"M17.5 17.0801H15.65","stroke":"currentColor","stroke-width":"1.5","stroke-linecap":"round","stroke-linejoin":"round"},{"d":"M12.97 17.0801H6.5","stroke":"currentColor","stroke-width":"1.5","stroke-linecap":"round","stroke-linejoin":"round"},{"d":"M17.5 13.3201H11.97","stroke":"currentColor","stroke-width":"1.5","stroke-linecap":"round","stroke-linejoin":"round"},{"d":"M9.27 13.3201H6.5","stroke":"currentColor","stroke-width":"1.5","stroke-linecap":"round","stroke-linejoin":"round"}]},"no_data_provided":{"viewBox":"0 0 512 512","fill":"currentColor","paths":[{"d":"m437.02 74.98c-48.353-48.352-112.64-74.98-181.02-74.98s-132.667 26.628-181.02 74.98-74.98 112.64-74.98 181.02 26.628 132.667 74.98 181.02 112.64 74.98 181.02 74.98 132.667-26.628 181.02-74.98 74.98-112.64 74.98-181.02-26.628-132.667-74.98-181.02zm-2.132 315.679c-15.31-10.361-31.336-19.314-47.952-26.789 7.339-28.617 11.697-59.688 12.784-91.87h79.702c-3.144 44.336-19.244 85.147-44.534 118.659zm-402.31-118.659h79.702c1.088 32.183 5.446 63.254 12.784 91.87-16.616 7.475-32.642 16.427-47.952 26.789-25.29-33.512-41.39-74.323-44.534-118.659zm44.53-150.654c15.31 10.362 31.336 19.315 47.954 26.79-7.338 28.615-11.695 59.683-12.783 91.864h-79.701c3.144-44.334 19.243-85.142 44.53-118.654zm283.519-42.581c-5.863-10.992-12.198-20.911-18.935-29.713 27.069 11.25 51.473 27.658 71.977 47.997-11.625 7.638-23.702 14.369-36.155 20.185-4.886-13.664-10.528-26.547-16.887-38.469zm-12.965 50.404c-29.211 9.792-60.039 14.831-91.662 14.831s-62.451-5.039-91.662-14.831c20.463-58.253 54.273-97.169 91.662-97.169s71.199 38.916 91.662 97.169zm-203.359 110.831c1.056-28.342 4.885-55.421 10.937-80.116 32.136 10.644 66.018 16.116 100.76 16.116s68.624-5.472 100.76-16.116c6.053 24.695 9.881 51.773 10.937 80.116zm223.394 32c-1.057 28.344-4.885 55.424-10.938 80.12-32.139-10.646-66.02-16.12-100.759-16.12s-68.62 5.474-100.759 16.12c-6.053-24.696-9.882-51.776-10.938-80.12zm-216.324-193.235c-6.358 11.922-12 24.805-16.887 38.468-12.452-5.815-24.53-12.547-36.155-20.185 20.503-20.34 44.907-36.747 71.977-47.997-6.737 8.803-13.073 18.722-18.935 29.714zm-16.886 316.008c4.886 13.661 10.528 26.542 16.885 38.462 5.863 10.992 12.198 20.911 18.935 29.713-27.067-11.25-51.469-27.655-71.971-47.992 11.625-7.637 23.701-14.368 36.151-20.183zm29.853-11.938c29.213-9.794 60.04-14.835 91.66-14.835s62.447 5.041 91.66 14.835c-20.463 58.251-54.272 97.165-91.66 97.165s-71.197-38.914-91.66-97.165zm196.287 50.4c6.357-11.92 11.999-24.801 16.885-38.462 12.451 5.815 24.527 12.547 36.151 20.183-20.502 20.337-44.904 36.743-71.971 47.992 6.737-8.802 13.073-18.721 18.935-29.713zm39.093-193.235c-1.088-32.18-5.445-63.249-12.783-91.864 16.618-7.475 32.645-16.428 47.954-26.79 25.287 33.511 41.386 74.319 44.53 118.654z"}]}};
@@ -165,7 +192,7 @@
         settingsPanel = document.createElement("section");
         settingsPanel.id = "cr-better-search";
         settingsPanel.setAttribute("role", "dialog");
-        settingsPanel.setAttribute("aria-label", "Settings");
+        translate(settingsPanel, 'Settings', 'aria-label');
 
         settingsBackdrop = document.createElement("div");
         settingsBackdrop.id = "cr-better-search-backdrop";
@@ -173,9 +200,9 @@
         settingsToggle = document.createElement("button");
         settingsToggle.id = "cr-better-search-toggle";
         settingsToggle.type = "button";
-        settingsToggle.setAttribute("aria-label", "Open search settings");
+        settingsToggle.setAttribute("aria-label", t('Settings'));
         settingsToggle.setAttribute("aria-expanded", "false");
-        settingsToggle.title = "Settings";
+        settingsToggle.title = t('Settings');
         settingsToggle.appendChild(createSettingsIcon());
 
         const header = document.createElement("div");
@@ -183,13 +210,13 @@
 
         const headingGroup = document.createElement("div");
         const heading = document.createElement("h2");
-        heading.textContent = "Settings";
+        translate(heading, 'Settings');
         headingGroup.appendChild(heading);
 
         const closeButton = document.createElement("button");
         closeButton.type = "button";
         closeButton.className = "cr-better-search-close";
-        closeButton.setAttribute("aria-label", "Close search settings");
+        translate(closeButton, 'Close settings', 'aria-label');
         closeButton.appendChild(createCloseIcon());
         closeButton.addEventListener("click", closeSettingsModal);
 
@@ -197,7 +224,7 @@
 
         const description = document.createElement("p");
         description.className = "cr-better-search-description";
-        description.textContent = "Filter results by available audio and subtitle languages.";
+        description.textContent = t('Filter results by available audio and subtitle languages.');
 
         const divider = document.createElement("div");
         divider.className = "cr-better-search-divider";
@@ -235,8 +262,8 @@
         calendarSearch.type = "search";
         calendarSearch.value = calendarQuery;
         calendarSearch.className = "cr-better-search-language-input";
-        calendarSearch.placeholder = "Search this week";
-        calendarSearch.setAttribute("aria-label", "Search calendar titles");
+        translate(calendarSearch, 'Search this week', 'placeholder');
+        translate(calendarSearch, 'Search calendar titles', 'aria-label');
         calendarSearch.addEventListener("input", () => {
             calendarQuery = normalizeText(calendarSearch.value);
             scheduleApply();
@@ -249,6 +276,8 @@
         window.addEventListener("resize", updateResponsiveLayout);
 
         document.body.append(settingsBackdrop, settingsPanel, settingsToggle);
+        settingsPanel.lang = i18n.locale;
+        settingsPanel.dir = i18n.direction;
         updateCalendarUI();
         setSettingsRouteVisibility(true);
         updateResponsiveLayout();
@@ -261,7 +290,7 @@
 
         const title = document.createElement("span");
         title.className = "cr-better-search-filter-title";
-        title.textContent = label;
+        translate(title, label);
 
         const checkboxLabel = document.createElement("label");
         checkboxLabel.className = "cr-better-search-checkbox";
@@ -280,7 +309,7 @@
         checkboxVisual.className = "cr-better-search-checkbox-visual";
 
         const checkboxText = document.createElement("span");
-        checkboxText.textContent = "Only matching results";
+        translate(checkboxText, 'Only matching results');
 
         checkboxLabel.append(checkbox, checkboxVisual, checkboxText);
         checkbox.addEventListener("change", () => onChange(
@@ -300,7 +329,7 @@
         const input = document.createElement("input");
         input.type = "search";
         input.className = "cr-better-search-language-input";
-        input.setAttribute("aria-label", `${label} language`);
+        translate(input, label === 'Audio' ? 'Audio language' : 'Subtitle language', 'aria-label');
         input.setAttribute("autocomplete", "off");
         input.setAttribute("spellcheck", "false");
 
@@ -314,7 +343,7 @@
         list.hidden = true;
 
         const renderSelectedValue = () => {
-            input.value = LANGUAGES[picker.dataset.value] || LANGUAGES[""];
+            input.value = i18n.languageName(picker.dataset.value);
         };
 
         const renderOptions = filter => {
@@ -322,6 +351,7 @@
             list.replaceChildren();
 
             Object.entries(LANGUAGES)
+                .map(([code]) => [code, i18n.languageName(code)])
                 .filter(([code, name]) =>
                     !normalizedFilter ||
                     normalizeText(name).includes(normalizedFilter) ||
@@ -618,7 +648,8 @@
             .cr-better-search-language-input {
                 width: 100%;
                 height: 40px;
-                padding: 0 38px 0 12px;
+                padding-block: 0;
+                padding-inline: 12px 38px;
                 color: #ffffff;
                 font: inherit;
                 font-size: 13px;
@@ -660,7 +691,7 @@
             .cr-better-search-picker-arrow {
                 position: absolute;
                 top: 50%;
-                right: 12px;
+                inset-inline-end: 12px;
                 color: rgba(255, 255, 255, 0.56);
                 pointer-events: none;
                 transform: translateY(-50%);
@@ -703,7 +734,7 @@
                 color: rgba(255, 255, 255, 0.84);
                 font: inherit;
                 font-size: 12px;
-                text-align: left;
+                text-align: start;
                 background: transparent;
                 border: 0;
                 border-radius: 8px;
@@ -849,8 +880,8 @@
         settingsPanel.querySelector("#cr-calendar-search").hidden = !active;
         const description = settingsPanel.querySelector(".cr-better-search-description");
         const text = active
-            ? "Filter this week's releases."
-            : "Filter results by available audio and subtitle languages.";
+            ? t("Filter this week's releases.")
+            : t("Filter results by available audio and subtitle languages.");
         if (description.textContent !== text) description.textContent = text;
         updateResponsiveLayout();
     }
@@ -1281,8 +1312,9 @@
             header.appendChild(status);
         }
         const message = cards.length
-            ? `${shown} / ${cards.length} releases${shown === 0 ? ' · No matching releases. Adjust Better Search filters.' : ''}`
-            : 'No releases in this calendar view.';
+            ? t('{shown} / {total} releases', {shown, total: cards.length}) +
+                (shown === 0 ? ' · ' + t('No matching releases. Adjust the search filters.') : '')
+            : t('No releases in this calendar view.');
         if (status.textContent !== message) status.textContent = message;
     }
 
@@ -1518,6 +1550,8 @@
             }
         }
 
+        container.lang = i18n.locale;
+        container.dir = i18n.direction;
         const labelKey = `${useAvailabilityIcons}:` + labels
             .map(label => `${label.type}:${label.matches}:${label.text}`)
             .join("|");
@@ -1544,27 +1578,27 @@
     function getAvailabilityLabels(availability, matchType = matchesType) {
         return [
             {type: "audio", locales: availability.audioLocales, hasType: availability.hasDub, language: dubFilter,
-                positive: "Dubbed in", negative: "Not dubbed in", absent: "Not dubbed",
+                positive: "Audio: {languages}", negative: "No audio in {languages}", absent: "Not dubbed",
                 unknown: "No dubbing information available"},
             {type: "subtitles", locales: availability.subtitleLocales, hasType: availability.hasSub, language: subFilter,
-                positive: "Subtitles available in", negative: "No subtitles available in", absent: "No subtitles available",
+                positive: "Subtitles: {languages}", negative: "No subtitles in {languages}", absent: "No subtitles available",
                 unknown: "No subtitle information available"}
         ].map(({type, locales, hasType, language, positive, negative, absent, unknown}) => {
             if (language) {
                 const matches = matchType(locales, hasType, language);
                 if (matches !== null) {
-                    return {type, text: `${matches ? positive : negative} ${LANGUAGES[language]}`, matches};
+                    return {type, text: t(matches ? positive : negative, {languages: i18n.languageName(language)}), matches};
                 }
             } else if (locales.length) {
                 // With "All" selected, list the actual known languages instead of a generic badge.
-                const names = uniqueValues(locales.map(locale => Object.entries(LANGUAGES)
-                    .find(([code]) => normalizeLocale(code) === normalizeLocale(locale))?.[1] || locale));
-                return {type, text: `${positive} ${names.join(", ")}`, matches: true};
+                const names = uniqueValues(locales.map(locale => i18n.languageName(locale)));
+                const languages = new Intl.ListFormat(i18n.locale, {style: 'short', type: 'conjunction'}).format(names);
+                return {type, text: t(positive, {languages}), matches: true};
             } else if (hasType === false) {
-                return {type, text: absent, matches: false};
+                return {type, text: t(absent), matches: false};
             }
             // A generic dubbed/subbed flag does not establish any specific language.
-            return {type, text: unknown, matches: null, color: "#58a6ff"};
+            return {type, text: t(unknown), matches: null, color: "#58a6ff"};
         });
     }
 

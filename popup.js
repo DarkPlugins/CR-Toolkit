@@ -273,7 +273,7 @@ function collectColorsFromCurrentPage() {
 
 async function addColorsFromCurrentPage(root = document) {
     const confirmed = window.confirm(
-        'Crunchyroll must be open in the active tab. This reads all colors from the currently open Crunchyroll page and adds any colors that are not already listed. Continue?'
+        window.CRToolkit.I18n.t("Read all colors from this Crunchyroll page and add missing colors?")
     );
     if (!confirmed) return;
 
@@ -284,7 +284,7 @@ async function addColorsFromCurrentPage(root = document) {
         const pageColors = collectColorsFromCurrentPage();
         const colorList = query(root, '#list-colors');
         if (!colorList || pageColors.length === 0) {
-            window.alert('No colors were found on the current Crunchyroll page.');
+            window.alert(window.CRToolkit.I18n.t("No colors were found on this page."));
             return;
         }
 
@@ -304,19 +304,19 @@ async function addColorsFromCurrentPage(root = document) {
             }));
 
         if (newMappings.length === 0) {
-            window.alert('All detected colors are already listed.');
+            window.alert(window.CRToolkit.I18n.t("All detected colors are already listed."));
             return;
         }
 
         renderColorMappings([...currentMappings, ...newMappings], root);
         if (await saveColorMappings(root)) {
-            window.alert(`${newMappings.length} new colors were added.`);
+            window.alert(window.CRToolkit.I18n.t("Added colors: {count}.", {count: newMappings.length}));
         } else {
             renderColorMappings(currentMappings, root);
         }
     } catch (error) {
         console.error('CR-Toolkit: Could not collect Crunchyroll colors', error);
-        window.alert('The colors could not be collected. Is a Crunchyroll page open in the active tab?');
+        window.alert(window.CRToolkit.I18n.t("Could not collect the page colors."));
     } finally {
         if (button) button.disabled = false;
     }
@@ -333,7 +333,7 @@ async function saveColorMappings(root = document) {
         return true;
     } catch (error) {
         console.error('CR-Toolkit: Could not save color mappings', error);
-        window.alert('The colors could not be saved. The browser sync storage may be full. Remove some color mappings and try again.');
+        window.alert(window.CRToolkit.I18n.t("Could not save colors. Free up browser sync storage by removing some color mappings and try again."));
         return false;
     }
 }
@@ -437,7 +437,8 @@ function renderColorMappings(mappings, root = document) {
     if (!Array.isArray(mappings) || mappings.length === 0) {
         const placeholder = document.createElement('span');
         placeholder.className = 'small';
-        placeholder.textContent = 'Add the colors you want to change';
+        placeholder.dataset.i18n = 'Add the colors you want to change';
+        placeholder.textContent = window.CRToolkit.I18n.t("Add the colors you want to change");
         colorList.appendChild(placeholder);
         return;
     }
@@ -464,7 +465,8 @@ function addColorRow(mapping = {}, root = document) {
     from.name = `color-from-${colorCounter}`;
     from.id = `color-from-${colorCounter}`;
     from.value = mapping.from || DEFAULT_FROM_COLOR;
-    from.setAttribute('aria-label', 'Original color');
+    from.setAttribute("data-i18n-aria-label", "Original color");
+    from.setAttribute('aria-label', window.CRToolkit.I18n.t("Original color"));
 
     const sep = document.createElement('span');
     sep.textContent = '→';
@@ -475,12 +477,14 @@ function addColorRow(mapping = {}, root = document) {
     to.name = `color-to-${colorCounter}`;
     to.id = `color-to-${colorCounter}`;
     to.value = mapping.to || DEFAULT_TO_COLOR;
-    to.setAttribute('aria-label', 'Replacement color');
+    to.setAttribute("data-i18n-aria-label", "Replacement color");
+    to.setAttribute('aria-label', window.CRToolkit.I18n.t("Replacement color"));
 
     const removeBtn = document.createElement('button');
     removeBtn.type = 'button';
     removeBtn.textContent = '✕';
-    removeBtn.setAttribute('aria-label', 'Remove color mapping');
+    removeBtn.setAttribute("data-i18n-aria-label", "Remove color mapping");
+    removeBtn.setAttribute('aria-label', window.CRToolkit.I18n.t("Remove color mapping"));
     removeBtn.addEventListener('click', () => {
         row.remove();
 
