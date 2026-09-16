@@ -74,6 +74,7 @@
 
         .control-button:focus-visible,
         .panel button:focus-visible,
+        .panel a:focus-visible,
         .panel select:focus-visible,
         .panel input:focus-visible + .toggle-label {
             outline: 2px solid var(--accent-strong);
@@ -485,6 +486,57 @@
             color: var(--panel-text);
         }
 
+        #s-options.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #s-options > .feat-item {
+            flex-shrink: 0;
+        }
+
+        .panel-footer {
+            display: flex;
+            flex-shrink: 0;
+            justify-content: center;
+            gap: 8px;
+            margin-top: auto;
+            padding-top: 8px;
+            border-top: 1px solid var(--panel-border);
+        }
+
+        .support-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            min-height: 32px;
+            padding: 6px 10px;
+            border: 1px solid transparent;
+            border-radius: 9px;
+            color: var(--panel-muted);
+            font-size: 11px;
+            font-weight: 550;
+            line-height: 1.4;
+            text-decoration: none;
+            transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        }
+
+        .support-link:hover,
+        .support-link:focus-visible {
+            border-color: var(--accent-border);
+            background: var(--accent-soft);
+            color: var(--accent-strong);
+        }
+
+        .support-link svg {
+            display: block;
+            width: 16px;
+            height: 16px;
+            flex: 0 0 auto;
+            fill: currentColor;
+        }
+
         @keyframes panel-in {
             from { opacity: 0; transform: translateY(-5px) scale(0.985); }
             to { opacity: 1; transform: translateY(0) scale(1); }
@@ -631,6 +683,21 @@
                                 <button class="reset-button" id="reset-accent-color" type="button">Reset</button>
                             </div>
                         </div>
+                        <footer class="panel-footer">
+                            <a class="support-link" href="https://github.com/DarkPlugins/CR-Toolkit/issues" target="_blank" rel="noopener noreferrer" title="Report a bug on GitHub">
+                                <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                                    <path d="M7 0V1.60002C7.32311 1.53443 7.65753 1.5 8 1.5C8.34247 1.5 8.67689 1.53443 9 1.60002V0H11V2.49963C11.8265 3.12041 12.4543 3.99134 12.7711 5H3.2289C3.5457 3.99134 4.17354 3.12041 5 2.49963V0H7Z"/>
+                                    <path d="M0 7V9H3V10.4957L0.225279 11.2885L0.774721 13.2115L3.23189 12.5095C3.87194 14.5331 5.76467 16 8 16C10.2353 16 12.1281 14.5331 12.7681 12.5095L15.2253 13.2115L15.7747 11.2885L13 10.4957V9H16V7H9V12H7V7H0Z"/>
+                                </svg>
+                                <span>Bug reports</span>
+                            </a>
+                            <a class="support-link" href="https://github.com/DarkPlugins/CR-Toolkit/discussions/new/choose" target="_blank" rel="noopener noreferrer" title="Share feedback on GitHub">
+                                <svg viewBox="0 0 128 128" aria-hidden="true" focusable="false">
+                                    <path d="M86.5,114.1c-0.5,2.9-3,4.9-5.9,4.9H34v8h46.6c6.8,0,12.6-4.9,13.8-11.5l6.4-36c0.7-4.1-0.4-8.3-3-11.4 c-2.7-3.2-6.6-5-10.7-5H71.2c1.2-3.7,2.8-9.1,4.1-16.2l0.6-4.2c0.9-6.6-3.7-12.6-10.2-13.5c-3.2-0.4-6.3,0.4-8.9,2.3 c-2.6,1.9-4.2,4.8-4.7,7.9l-0.6,4c-0.1,0.5-0.2,1-0.2,1.5c-0.1,0.5-0.2,1-0.3,1.5C47.9,61,36.3,72.8,21.3,76.6L16,77.9V127h8V84.1 c17.5-4.7,31.2-18.7,34.9-36c0.1-0.6,0.2-1.2,0.4-1.8c0.1-0.6,0.2-1.2,0.3-1.8l0.6-4c0.1-1.1,0.7-2,1.6-2.6c0.9-0.6,1.9-0.9,3-0.8 c2.2,0.3,3.7,2.3,3.4,4.5l-0.5,3.9c-2.1,11.6-5,18.3-5.5,19.6l-0.3,0.8l0,5.2h25.5c1.8,0,3.5,0.8,4.6,2.1c1.1,1.4,1.6,3.2,1.3,4.9 L86.5,114.1z"/>
+                                </svg>
+                                <span>Feedback</span>
+                            </a>
+                        </footer>
                     </div>
                 </div>
             </div>
