@@ -110,7 +110,10 @@ new MutationObserver(syncFeaturesRoute).observe(document, {
 
     function syncBetterSearchState() {
         try {
-            chrome.storage.sync.get(["enabled_better_search", "enabled_better_calender"], data => {
+            chrome.storage.sync.get(["enabled_better_search", "enabled_better_search_icons", "enabled_better_calender"], data => {
+                postBridgeMessage("CR_BETTER_SEARCH_ICONS", {
+                    enabled: data.enabled_better_search_icons === true
+                });
                 postBridgeMessage("CR_BETTER_CALENDER_ENABLED", {
                     enabled: data.enabled_better_calender !== false
                 });
@@ -133,6 +136,9 @@ new MutationObserver(syncFeaturesRoute).observe(document, {
             });
             if (changes.enabled_better_search) postBridgeMessage("CR_BETTER_SEARCH_ENABLED", {
                 enabled: changes.enabled_better_search.newValue !== false
+            });
+            if (changes.enabled_better_search_icons) postBridgeMessage("CR_BETTER_SEARCH_ICONS", {
+                enabled: changes.enabled_better_search_icons.newValue === true
             });
         });
     } catch (error) {

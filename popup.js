@@ -50,6 +50,7 @@ function initPopup(root = document) {
         player_resize: true,
         auto_skip: true,
         better_search: true,
+        better_search_icons: false,
         better_calender: true,
         hide_header: false,
         change_header: false,
@@ -71,6 +72,8 @@ function initPopup(root = document) {
         .filter(({ key }) => key.startsWith('enabled_change_header_'))
         .map(({ checkbox }) => checkbox);
     const headerCheckbox = query(root, '#toggle-change-header');
+    const betterSearchCheckbox = query(root, '#toggle-better-search');
+    const betterSearchChildren = [query(root, '#toggle-better-search-icons')].filter(Boolean);
     const btnAddNewColor = query(root, '#btn-add-color');
     const btnAddPageColors = query(root, '#btn-add-page-colors');
     const colorSort = query(root, '#color-sort');
@@ -106,6 +109,7 @@ function initPopup(root = document) {
             if (checkbox) checkbox.checked = data[key] ?? fallback;
         });
         if (headerCheckbox) updateHeaderChildrenState(headerChildren, headerCheckbox.checked, root);
+        if (betterSearchCheckbox) updateHeaderChildrenState(betterSearchChildren, betterSearchCheckbox.checked, root);
         if (colorSort) colorSort.value = data.color_sort_order === 'color' ? 'color' : 'added';
         if (accentColor) accentColor.value = data.popup_accent_color || DEFAULT_ACCENT_COLOR;
         applyAccentColor(root, data.popup_accent_color);
@@ -126,6 +130,9 @@ function initPopup(root = document) {
             chrome.storage.sync.set({ [key]: checkbox.checked });
             if (checkbox === headerCheckbox) {
                 updateHeaderChildrenState(headerChildren, checkbox.checked, root);
+            }
+            if (checkbox === betterSearchCheckbox) {
+                updateHeaderChildrenState(betterSearchChildren, checkbox.checked, root);
             }
         });
     });

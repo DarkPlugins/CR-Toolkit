@@ -536,6 +536,11 @@
                             <input type="checkbox" id="toggle-better-search" aria-labelledby="toggle-better-search-text">
                             <label for="toggle-better-search" class="toggle-label"></label>
                         </div>
+                        <div class="feat-item child">
+                            <span class="toggle-text" id="toggle-better-search-icons-text">Use Icons instead</span>
+                            <input type="checkbox" id="toggle-better-search-icons" aria-labelledby="toggle-better-search-icons-text" disabled>
+                            <label for="toggle-better-search-icons" class="toggle-label"></label>
+                        </div>
                         <div class="feat-item">
                             <span class="toggle-text" id="toggle-better-calender-text">Better Calender</span>
                             <input type="checkbox" id="toggle-better-calender" aria-labelledby="toggle-better-calender-text">
